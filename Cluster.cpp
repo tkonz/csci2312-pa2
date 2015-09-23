@@ -12,32 +12,22 @@
 
 namespace Clustering
 {
-    Cluster::Cluster(const Cluster &c): size(c.size), head(nullptr)
+    Cluster::Cluster(const Cluster &c) : size(c.size), head(nullptr)
     {
         
-        /*
-        LNodePtr currentNodePtr = c.head; // Initialize nodePtr to head of list
-        LNodePtr nextNodePtr = nullptr;
-        
-        while (currentNodePtr != nullptr)
+        if (this == &c)
         {
-            nextNodePtr = currentNodePtr->next;
-            head = &currentNodePtr->p;
-            
+            return;
         }
-        */
+        else
+        {
+            LNodePtr *cloud = new LNodePtr;
+            head = *cloud;
+        }
+
+
     }
    
-    /*
-    Cluster(const Cluster &rhs)
-    : size(rhs.size), capacity(rhs.capacity) {
-        points = new PointPtr[capacity];
-        for (int i = 0; i < capacity; i++)
-            points[i] = nullptr;
-        for (int i = 0; i < size; i++)
-            points[i] = new Point(rhs.points[i]);
-    }
-    */
     
     Cluster& Cluster::operator=(const Cluster &c)
     {
@@ -186,12 +176,35 @@ namespace Clustering
         LNodePtr currentNode = rhs.head;
         while (currentNode != nullptr)
         {
-            this->add(currentNode->p);
+            this->add(currentNode->p);  // add point that p is pointing to
             currentNode = currentNode->next;
         }
-        return *this;
+        return *this;   // dereferencing the object
     
     }
+    
+    Cluster & Cluster::operator-=(const Cluster &rhs)
+    {
+        LNodePtr currentNode = rhs.head;
+        while (currentNode != nullptr)
+        {
+            
+        }
+        return *this;
+
+    }
+    
+    Cluster & Cluster::operator+=(const Point &rhs)
+    {
+        return *this;
+    }
+    
+    Cluster & Cluster::operator-=(const Point &rhs)
+    {
+        return *this;
+    }
+    
+    
     
     const Cluster operator+(const Cluster &lhs, const Cluster &rhs)
     {
@@ -202,6 +215,27 @@ namespace Clustering
         return total;
         
     }
+    
+    const Cluster operator-(const Cluster &lhs, const Cluster &rhs)
+    {
+        
+        Cluster total;
+        return total;
+    }
+    
+    const Cluster operator+(const Cluster &lhs, const PointPtr &rhs)
+    {
+        return lhs;
+    }
+    
+    const Cluster operator-(const Cluster &lhs, const PointPtr &rhs)
+    {
+        return lhs;
+    }
+    
+    
+    
+    
     
     
 

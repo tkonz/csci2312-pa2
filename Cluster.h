@@ -47,22 +47,22 @@ namespace Clustering {
         
         // Members
         Cluster &operator+=(const Cluster &rhs); // union
-        // Cluster &operator-=(const Cluster &rhs); // (asymmetric) difference
+        Cluster &operator-=(const Cluster &rhs); // (asymmetric) difference
         
-        // Cluster &operator+=(const Point &rhs); // add point
-        // Cluster &operator-=(const Point &rhs); // remove point
+        Cluster &operator+=(const Point &rhs); // add point
+        Cluster &operator-=(const Point &rhs); // remove point
         
         // Set-destructive operators (duplicate points in the space)
         // Friends
         friend const Cluster operator+(const Cluster &lhs, const Cluster &rhs);
-        //friend const Cluster operator-(const Cluster &lhs, const Cluster &rhs);
+        friend const Cluster operator-(const Cluster &lhs, const Cluster &rhs);
         
-        //friend const Cluster operator+(const Cluster &lhs, const PointPtr &rhs);
-        //friend const Cluster operator-(const Cluster &lhs, const PointPtr &rhs);
+        friend const Cluster operator+(const Cluster &lhs, const PointPtr &rhs);
+        friend const Cluster operator-(const Cluster &lhs, const PointPtr &rhs);
         
         // IO
-        // friend std::ostream &operator<<(std::ostream &, const Cluster &);
-        // friend std::istream &operator>>(std::istream &, Cluster &);
+        friend std::ostream &operator<<(std::ostream &, const Cluster &);
+        friend std::istream &operator>>(std::istream &, Cluster &);
         
     };
 }

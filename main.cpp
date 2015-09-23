@@ -23,5 +23,7 @@ int main()
     {
         p[i] = i+2*3;
     }
-    return 0;
+    
+    
+        return 0;
 }

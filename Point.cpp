@@ -8,7 +8,6 @@
 
 #include "Point.h"
 #include <cmath>
-using namespace Clustering;
 
 namespace Clustering
 {
@@ -16,6 +15,15 @@ namespace Clustering
     Point::Point(int dimensions)
     {
         values = new double[dimensions];
+    }
+    
+    Point::Point(const Point &p)
+    {
+        values = new double[p.dim];
+        for (int i = 0; i < dim; i++)
+        {
+            values[i] = p.values[i];
+        }
     }
 
     void Point::setValue(int dimension, double p)
