@@ -6,47 +6,51 @@
 //  Copyright (c) 2015 Tisha Konz. All rights reserved.
 //
 
-#include "Point.h"
+#include "point.h"
 #include <cmath>
 
 namespace Clustering
 {
-
+    
     Point::Point(int dimensions)
     {
+        dim = dimensions;
         values = new double[dimensions];
+        
     }
     
     Point::Point(const Point &p)
     {
-        values = new double[p.dim];
+        this->dim = p.getDimensions();
+        values = new double[dim];
         for (int i = 0; i < dim; i++)
         {
             values[i] = p.values[i];
         }
     }
-
+    
     void Point::setValue(int dimension, double p)
     {
-         values[dimension] = p;
+        dim = dimension;
+        values[dim - 1] = p;
     }
     
     double Point::getValue(int dimension) const
     {
-        return values[dimension];
+        return values[dimension-1];
     }
-
+    
     Point& Point::operator=(const Point &p)
     {
         // check for self-assignment
-        if (dim != p.dim)
+        if (this->dim != p.dim)
         {
             delete [] values;
             values = new double[p.dim];
         }
         
-        dim = p.dim;
-        for (int i = 0; i < dim; i++)
+        this->dim = p.dim;
+        for (int i = 0; i < p.dim; i++)
         {
             values[i] = p.values[i];
             
@@ -84,16 +88,24 @@ namespace Clustering
     
     const Point Point::operator*(const Point &p)
     {
-        for (int i = 0; i < dim; i++)
+        double product = 0;
+        Point temp(p.dim);
+        for (int i = 0; i < p.dim; i++)
         {
-            Point(dim) = values[i] * values[i];
+            product = this->values[i] * p.values[i];
+            temp.setValue(i+1, product);
         }
-        return *this;
+        return temp;
     }
     
     const Point Point::operator/(double scalar) const
     {
-        return Point(dim) /= scalar;
+        
+        for (int i = 0; i < dim; i++)
+        {
+            values[i] /= scalar;
+        }
+        return *this;
     }
     
     
@@ -101,12 +113,13 @@ namespace Clustering
     {
         double sum;
         if (p.dim == dim)
-           for (int i = 0; i < dim; i++)
-           {
-               double difference = values[i] - p.values[i];
-               sum += difference * difference;
-           }
+            for (int i = 0; i < dim; i++)
+            {
+                double difference = values[i] - p.values[i];
+                sum += difference * difference;
+            }
         return sqrt(sum);
+        
     }
     
     
@@ -132,25 +145,27 @@ namespace Clustering
     
     const Point operator+(const Point &p, const Point &q)
     {
-        // check dimensions ==
-        Point *temp = new Point(p.dim);
+        
+        Point temp(p.dim);
         for (int i = 0; i < p.dim; i++)
         {
-            temp[i] = p.values[i] + q.values[i];
+            p.values[i] += q.values[i];
+            temp.values[i] += p.values[i];
         }
-        return *temp;
+        return temp;
     }
     
     const Point operator-(const Point &p, const Point &q)
     {
         // check dimensions ==
         
-        Point *temp = new Point(p.dim);
+        Point temp(p.dim);
         for (int i = 0; i < p.dim; i++)
         {
-            temp[i] = p.values[i] - q.values[i];
+            p.values[i] -= q.values[i];
+            temp.values[i] = p.values[i];
         }
-        return *temp;
+        return temp;
     }
     
     bool operator==(const Point &p, const Point &q)
@@ -192,7 +207,7 @@ namespace Clustering
     bool operator<(const Point &p, const Point &q)
     {
         bool equal = false;
-        if (p.getDimensions() == q.getDimensions())
+        if (p.dim == q.dim)
         {
             equal = true;
             for (int i = 0; i < p.dim; i++)
@@ -211,7 +226,7 @@ namespace Clustering
     bool operator>(const Point &p, const Point &q)
     {
         bool equal = false;
-        if (p.getDimensions() > q.getDimensions())
+        if (p.dim > q.dim)
         {
             equal = true;
             for (int i = 0; i < p.dim; i++)
@@ -229,7 +244,7 @@ namespace Clustering
     bool operator<=(const Point &p, const Point &q)
     {
         bool equal = false;
-        if (p.getDimensions() == q.getDimensions())
+        if (p.dim == q.dim)
         {
             for (int i = 0; i < p.dim; i++)
             {
@@ -247,7 +262,7 @@ namespace Clustering
     bool operator>=(const Point &p, const Point &q)
     {
         bool equal = false;
-        if (p.getDimensions() == q.getDimensions())
+        if (p.dim == q.dim)
         {
             for (int i = 0; i < p.dim; i++)
             {
@@ -261,29 +276,36 @@ namespace Clustering
         }
         return equal;
     }
-
-
-
+    
+    
     
     std::ostream &operator<<(std::ostream &os, const Point &p)
     {
         os << "(";
-        for (int i = 0; i < (p.dim - 1); i++)
+        for (int index = 0; index < p.dim; index++)
         {
-            os << p.values[i] << ", ";
+            
+            os << p.values[index];
+            if (index == (p.dim-1))
+            {
+                os << ")\n";
+            }
+            else
+            {
+                os << ", ";
+            }
         }
-        os << ")\n";
         return os;
     }
-
+    
     std::istream &operator>>(std::istream &is, Point &p)
     {
         
-        for (int i = 0; i < p.dim; i++)
+        for (int i = -1; i < p.dim; i++)
         {
             is >> p.values[i];
         }
         return is;
     }
-
+    
 }
