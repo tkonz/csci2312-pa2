@@ -24,11 +24,11 @@ namespace Clustering {
     
     class Cluster {
         int size;
-        LNodePtr head; // linked-list head
+        LNodePtr points; // linked-list head
         
         
     public:
-        Cluster() : size(0), head(nullptr) {};
+        Cluster() : size(0), points(nullptr) {};
         
         // The big three: cpy ctor, overloaded operator=, dtor
         Cluster(const Cluster &);

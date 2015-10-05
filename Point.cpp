@@ -16,7 +16,6 @@ namespace Clustering
     {
         dim = dimensions;
         values = new double[dimensions];
-        
     }
     
     Point::Point(const Point &p)
@@ -31,8 +30,7 @@ namespace Clustering
     
     void Point::setValue(int dimension, double p)
     {
-        dim = dimension;
-        values[dim - 1] = p;
+        values[dimension - 1] = p;
     }
     
     double Point::getValue(int dimension) const
@@ -43,6 +41,9 @@ namespace Clustering
     Point& Point::operator=(const Point &p)
     {
         // check for self-assignment
+        if (this == &p)
+            return *this;
+        
         if (this->dim != p.dim)
         {
             delete [] values;
@@ -171,37 +172,50 @@ namespace Clustering
     bool operator==(const Point &p, const Point &q)
     {
         bool equal = false;
+        //std::cout << "bool = " << equal << std::endl;
         if (p.getDimensions() == q.getDimensions())
         {
             bool equal = true;
+            //std::cout << "bool = " << equal << std::endl;
             for (int i = 0; i < p.dim; i++)
             {
-                if (p.values[i] != q.values[i])
+                if (p.values[i] == q.values[i])
                 {
+                    equal = true;
+                    //std::cout << "bool = " << equal << std::endl;
+                }
+                else
+                {
+                    
                     equal = false;
-                    break;
                 }
             }
+            return equal;
         }
         return equal;
     }
     
     bool operator!=(const Point &p, const Point &q)
     {
-        bool equal = false;
+        bool notEqual = true;
         if (p.getDimensions() == q.getDimensions())
         {
             
             for (int i = 0; i < p.dim; i++)
             {
-                if (p.values[i] != q.values[i])
+                if (p.values[i] == q.values[i])
                 {
-                    equal = true;
-                    break;
+                    notEqual = false;
+                    
+                }
+                else
+                {
+                    notEqual = true;
                 }
             }
+            return notEqual;
         }
-        return equal;
+        return notEqual;
     }
     
     bool operator<(const Point &p, const Point &q)
@@ -295,6 +309,7 @@ namespace Clustering
                 os << ", ";
             }
         }
+        //os << std::endl;
         return os;
     }
     

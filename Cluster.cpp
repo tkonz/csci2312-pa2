@@ -12,22 +12,37 @@
 
 namespace Clustering
 {
-    Cluster::Cluster(const Cluster &c) : size(c.size), head(nullptr)
+    Cluster::Cluster(const Cluster &c) : size(c.size), points(c.points)
     {
-        
         if (this == &c)
         {
             return;
         }
-        else
+        if (size != c.size)
         {
-            LNodePtr *cloud = new LNodePtr;
-            head = *cloud;
+            this->size = c.size;
         }
         
+        LNodePtr nodePtrThis, nodePtrC = new LNode; // initializing node for traversing this and c
+        
+        nodePtrThis = this->points;
+        
+        nodePtrC = c.points;
+        
+        nodePtrThis->p = nodePtrC->p;
+        
+        while (nodePtrC->p && nodePtrC->next)
+        {
+            nodePtrC = nodePtrC->next;
+            nodePtrThis = nodePtrThis->next;
+            nodePtrThis->p = nodePtrC->p;
+        }
+        
+        if (nodePtrC == nullptr)
+            nodePtrThis->p = nullptr;
         
     }
-    
+   
     
     Cluster& Cluster::operator=(const Cluster &c)
     {
@@ -36,26 +51,46 @@ namespace Clustering
         {
             return *this;
         }
-        //if (size != c.size)
+        
+        if (size != c.size)
         {
-            LNodePtr *cloud = new LNodePtr;
-            delete [] head;
-            head = *cloud;
+            this->size = c.size;
         }
+        
+        //this->points->p = c.points->p;
+        points = new LNode;
+        
+        //LNodePtr thisPtr = points;
+        
+        points->p = c.points->p;
+        
+        while (c.points->p && c.points->next)
+        {
+            points->next = c.points->next;
+            
+            points->p = c.points->p;
+        }
+        
+        if (c.points->p == nullptr)
+            points->p = nullptr;
+        
+        
         return *this;
+        
     }
     
     Cluster::~Cluster()
     {
-        LNodePtr currentNodePtr = head; // Initialize nodePtr to head of list
+        LNodePtr currentNodePtr = points; // Initialize nodePtr to head of list
         LNodePtr nextNodePtr = nullptr;
-        while (currentNodePtr != nullptr)
+        while (currentNodePtr->p != nullptr && currentNodePtr->next != nullptr)
         {
             nextNodePtr = currentNodePtr->next;
-            delete currentNodePtr;
+            if (!nextNodePtr->p)
+                delete currentNodePtr;
             currentNodePtr = nextNodePtr;
         }
-        delete currentNodePtr;
+        // delete currentNodePtr;
     }
     
     void Cluster::add(const PointPtr &value)
@@ -67,36 +102,39 @@ namespace Clustering
         
         newNode->p = value;   // sets pointptr p to the ptr address
         
-        if (!head)  // if there isn't a head pointer, this creates it
-        {
-            head = newNode;
-            newNode->next = nullptr; // sets listptr to the next node in the list to null
-        }
-        else
-        {
-            nodePtr = head; // Initialize nodePtr to head of list
-            previousPtr = nullptr; // Initialize previousNode to null
-            
-            // Skip all nodes whose value is less than point
-            while (nodePtr != nullptr && nodePtr->p < value)
+            if (!points)  // if there isn't a head pointer, this creates it
             {
-                previousPtr = nodePtr;
-                nodePtr = nodePtr->next;
+                points = newNode;
+                size++;
+                newNode->next = nullptr; // sets listptr to the next node in the list to null
             }
-            
-            // If the new node is to be the 1st in the list,
-            // insert it before all other nodes.
-            if (previousPtr == nullptr)
+            else
             {
-                head = newNode;
-                newNode->next = nodePtr;
+                nodePtr = points; // Initialize nodePtr to head of list
+                previousPtr = nullptr; // Initialize previousNode to null
+                
+                // Skip all nodes whose value is less than point
+                while (nodePtr != nullptr && nodePtr->p < value)
+                {
+                    previousPtr = nodePtr;
+                    nodePtr = nodePtr->next;
+                }
+                
+                // If the new node is to be the 1st in the list,
+                // insert it before all other nodes.
+                if (previousPtr == nullptr)
+                {
+                    points = newNode;
+                    newNode->next = nodePtr;
+                    size++;
+                }
+                else    // otherwise insert after the previous node
+                {
+                    previousPtr->next = newNode;
+                    newNode->next = nodePtr;
+                    size++;
+                }
             }
-            else    // otherwise insert after the previous node
-            {
-                previousPtr->next = newNode;
-                newNode->next = nodePtr;
-            }
-        }
     }
     
     const PointPtr& Cluster::remove(const PointPtr &value)
@@ -105,41 +143,43 @@ namespace Clustering
         LNodePtr previousPtr = nullptr;
         
         // If list is empty do nothing
-        if (!head)
+        if (!points)
             return value;
         
         // Determine if the first node is the one.
-        if (head->p == value)
+        if (*(points->p) == *(value))
         {
-            nodePtr = head->next;
-            delete head;
-            head = nodePtr;
+            nodePtr = points->next;
+            delete points;
+            points = nodePtr;
             size--;
         }
         else
         {
             // Initialize nodePtr to head of list
-            nodePtr = head;
+            nodePtr = points;
             
             // Skip all nodes whose value member is
             // not equal to num
-            while (nodePtr != nullptr && nodePtr->p != value)
+            while (nodePtr != nullptr && (*(nodePtr->p) != *(value)))
             {
+                //std::cout << "enetered while loop\n";
                 previousPtr = nodePtr;
                 nodePtr = nodePtr->next;
+                
             }
-            
-            // If nodePtr is not at the end of the list,
-            // link the previous node to the node after nodePtr,
-            // then delete nodePtr
+            // If nodePtr is not at the end of list, link the previous node
+            // to the node after nodePtr, then delete nodePtr
             if (nodePtr)
             {
+                //std::cout << "entered if statement.\n";
                 previousPtr->next = nodePtr->next;
                 delete nodePtr;
                 size--;
             }
+            
         }
-        return value;
+        return points->p;
     }
     
     bool operator==(const Cluster &lhs, const Cluster &rhs)
@@ -152,59 +192,59 @@ namespace Clustering
         }
         else
         {
-            nodePtrL = lhs.head;    // set left side startiing point equal to
-            nodePtrR = rhs.head;    // right side starting point since of same size
-            while (nodePtrL && nodePtrR)
+            nodePtrL = lhs.points;    // set left side startiing point equal to
+            nodePtrR = rhs.points;    // right side starting point since of same size
+            while (nodePtrL && nodePtrR && nodePtrL->next && nodePtrR->next)
             {
-                if (nodePtrL->p != nodePtrR->p) // If the values are not equal, return 0
+                if (*(nodePtrL->p) != *(nodePtrR->p)) // If the values are not equal, return 0
                     return false;
-                if (nodePtrL->next && nodePtrR->next)   // If values can continue on both side set
-                    // both side to the next node
+                if (nodePtrL->next && nodePtrR->next)      // If values can continue on both side set
+                                                           // both side to the next node
                 {
                     nodePtrL = nodePtrL->next;
                     nodePtrR = nodePtrR->next;
                 }
                 
             }   // if exiting while loop, at the same time under conditions
-            // both clusters must be equal
+                // both clusters must be equal
             return true;
         }
     }
     
     Cluster& Cluster::operator+=(const Cluster &rhs)
     {
-        LNodePtr currentNode = rhs.head;
+        LNodePtr currentNode = rhs.points;
         while (currentNode != nullptr)
         {
             this->add(currentNode->p);  // add point that p is pointing to
             currentNode = currentNode->next;
         }
         return *this;   // dereferencing the object
-        
+    
     }
     
     Cluster & Cluster::operator-=(const Cluster &rhs)
     {
-        LNodePtr currentNode = rhs.head;
+        LNodePtr currentNode = rhs.points;
         while (currentNode != nullptr)
         {
-            LNodePtr nodePtrL = this->head;
-            LNodePtr nodePtrR = rhs.head;
-            while (nodePtrR != nullptr)
-            {
-                if (nodePtrR->p == nodePtrL->p)
-                {
-                    this->remove(currentNode->p);    // remove point from Cluster
-                    currentNode = currentNode->next;
-                }
-            }
+           LNodePtr nodePtrL = this->points;
+           LNodePtr nodePtrR = rhs.points;
+           while (nodePtrR != nullptr)
+           {
+               if (nodePtrR->p == nodePtrL->p)
+               {
+                   this->remove(currentNode->p);    // remove point from Cluster
+                   currentNode = currentNode->next;
+               }
+           }
             
         }
         return *this;
-        
+
     }
     //Cluster & Cluster::operator+=(const PointPtr *rhs) {
-    
+       
     //}
     
     Cluster & Cluster::operator+=(const Point &rhs)
@@ -218,8 +258,9 @@ namespace Clustering
     
     Cluster & Cluster::operator-=(const Point &rhs)
     {
-        Point p(rhs);
+        Point p = rhs;
         this->remove(&p);
+        //std::cout << "*this = " << *this << std::endl;
         return *this;
     }
     
@@ -260,10 +301,28 @@ namespace Clustering
         return total;
     }
     
+    std::ostream &operator<<(std::ostream &os, const Cluster &c)
+    {
+        LNodePtr current = c.points;
+        while (current != NULL)
+        {
+            os << *(current->p);
+            current = current->next;
+        }
+        return os;
+    }
     
+    std::istream &operator>>(std::istream &is, Cluster &c)
+    {
+        
+        LNodePtr current = c.points;
+        while (current != NULL)
+        {
+            is >> *(current->p);
+            current = current->next;
+        }
+        return is;
+    }
     
-    
-    
-    
-    
+
 }

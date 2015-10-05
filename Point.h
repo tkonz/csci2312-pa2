@@ -14,6 +14,7 @@
 namespace Clustering {
     
     class Point {
+    private:
         int dim;        // number of dimensions of the point
         double *values; // values of the point's dimensions
         
