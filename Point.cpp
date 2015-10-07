@@ -84,7 +84,11 @@ namespace Clustering
     
     const Point Point::operator*(double scalar) const
     {
-        return Point(dim) *= scalar;
+        for (int i = 0; i < dim; i++)
+        {
+            values[i] *= scalar;
+        }
+        return *this;
     }
     
     const Point Point::operator*(const Point &p)
@@ -123,7 +127,6 @@ namespace Clustering
         
     }
     
-    
     Point &operator+=(Point & p, const Point &q)
     {
         // check dimensions ==
@@ -150,8 +153,9 @@ namespace Clustering
         Point temp(p.dim);
         for (int i = 0; i < p.dim; i++)
         {
-            p.values[i] += q.values[i];
-            temp.values[i] += p.values[i];
+            double sum;
+            sum = p.values[i] + q.values[i];
+            temp.values[i] = sum;
         }
         return temp;
     }
@@ -163,8 +167,9 @@ namespace Clustering
         Point temp(p.dim);
         for (int i = 0; i < p.dim; i++)
         {
-            p.values[i] -= q.values[i];
-            temp.values[i] = p.values[i];
+            double difference;
+            difference = p.values[i] - q.values[i];
+            temp.values[i] = difference;
         }
         return temp;
     }
