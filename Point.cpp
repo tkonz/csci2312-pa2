@@ -8,6 +8,9 @@
 
 #include "point.h"
 #include <cmath>
+#include <fstream>
+#include <string>
+#include <iomanip>
 
 namespace Clustering
 {
@@ -62,6 +65,7 @@ namespace Clustering
     Point::~Point()
     {
         delete [] values;
+        //cout << "Entered Point destructor";
     }
     
     Point& Point::operator*=(double scalar)
@@ -225,39 +229,47 @@ namespace Clustering
     
     bool operator<(const Point &p, const Point &q)
     {
-        bool equal = false;
-        if (p.dim == q.dim)
+        bool lessThan = false;
+        if (p.dim != q.dim)
         {
-            equal = true;
-            for (int i = 0; i < p.dim; i++)
+            return 0;
+        }
+        
+        for (int i = 0; i < p.dim; i++)
+        {
+            if (p.values[i] > q.values[i])
             {
-                if (p.values[i] > q.values[i])
-                {
-                    equal = false;
-                    break;
-                }
+                lessThan = false;
                 
             }
+            if (p.values[i] < q.values[i])
+            {
+                lessThan = true;
+            }
         }
-        return equal;
+        return lessThan;
     }
     
     bool operator>(const Point &p, const Point &q)
     {
-        bool equal = false;
-        if (p.dim > q.dim)
+        bool greaterThan = false;
+        if (p.dim == q.dim)
         {
-            equal = true;
-            for (int i = 0; i < p.dim; i++)
+            greaterThan = true;
+        }
+        
+        for (int i = 0; i < p.dim; i++)
+        {
+            if (p.values[i] > q.values[i])
             {
-                if (p.values[i] > q.values[i])
-                {
-                    equal = false;
-                    break;
-                }
+                greaterThan = true;
+            }
+            if (p.values[i] < q.values[i])
+            {
+                greaterThan = false;
             }
         }
-        return equal;
+        return greaterThan;
     }
     
     bool operator<=(const Point &p, const Point &q)
@@ -300,14 +312,17 @@ namespace Clustering
     
     std::ostream &operator<<(std::ostream &os, const Point &p)
     {
-        os << "(";
+        //os << "(";
+        
+        cout << std::fixed << std::setprecision(1);
         for (int index = 0; index < p.dim; index++)
         {
             
             os << p.values[index];
             if (index == (p.dim-1))
             {
-                os << ")\n";
+                //os << endl;
+                
             }
             else
             {
@@ -321,11 +336,22 @@ namespace Clustering
     std::istream &operator>>(std::istream &is, Point &p)
     {
         
-        for (int i = -1; i < p.dim; i++)
+        string value;
+        double d;
+        
+        int i = 1;
+        while (getline(is, value, ','))
         {
-            is >> p.values[i];
+            d = stod(value);
+            p.setValue(i++, d);
+            cout << "Value: " << d << endl;
+            
         }
+        
+        
         return is;
+        
     }
     
 }
+

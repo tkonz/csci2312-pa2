@@ -10,6 +10,19 @@
 
 #include <iostream>
 #include <cmath>
+#include <fstream>
+#include <sstream>
+
+// iostream
+using std::cout;
+using std::endl;
+
+// fstream
+using std::ifstream;
+
+// sstream
+using std::stringstream;
+using std::string;
 
 namespace Clustering {
     
