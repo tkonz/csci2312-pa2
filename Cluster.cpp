@@ -11,9 +11,7 @@
 #include <stdlib.h>
 #include <fstream>
 #include <cstdlib>
-#include <float.h>
 
-double MAX = DBL_MAX;
 
 namespace Clustering
 {
@@ -87,6 +85,7 @@ namespace Clustering
             cursor = cursor->next;
         }
         this->size = c.size;
+        __idGenerator++;
         return *this;
         
     }
@@ -143,12 +142,14 @@ namespace Clustering
                 points = newNode;
                 newNode->next = nodePtr;
                 size++;
+                __centroid_valid = false;
             }
             else    // otherwise insert after the previous node
             {
                 previousPtr->next = newNode;
                 newNode->next = nodePtr;
                 size++;
+                __centroid_valid = false;
             }
         }
     }
@@ -169,6 +170,7 @@ namespace Clustering
             delete points;
             points = nodePtr;
             size--;
+            __centroid_valid = false;
         }
         else
         {
@@ -192,6 +194,7 @@ namespace Clustering
                 previousPtr->next = nodePtr->next;
                 delete nodePtr;
                 size--;
+                __centroid_valid = false;
             }
             
         }
@@ -227,6 +230,7 @@ namespace Clustering
         }
     }
     
+    
     Cluster& Cluster::operator+=(const Cluster &rhs)
     {
         LNodePtr currentNode = rhs.points;
@@ -259,9 +263,6 @@ namespace Clustering
         return *this;
         
     }
-    //Cluster & Cluster::operator+=(const PointPtr *rhs) {
-    
-    //}
     
     Cluster & Cluster::operator+=(const Point &rhs)
     {
@@ -282,8 +283,6 @@ namespace Clustering
         return *this;
     }
     
-    
-    
     const Cluster operator+(const Cluster &lhs, const Cluster &rhs)
     {
         unsigned dimensions = lhs.__dimensionality;
@@ -292,7 +291,6 @@ namespace Clustering
         total += lhs;
         total += rhs;
         return total;
-        
     }
     
     const Cluster operator-(const Cluster &lhs, const Cluster &rhs)
@@ -339,8 +337,6 @@ namespace Clustering
             os << "Empty Cluster";
             os << " : " << c.get_id() << endl;
         }
-        
-        
         return os;
         
     }
@@ -355,7 +351,7 @@ namespace Clustering
         cout << "Line: " << line << endl;
         
         stringstream lineStream(line);
-        Point *p = new Point(5);
+        Point *p = new Point(2);
         
         lineStream >> *p;
         c.add(p);
@@ -363,29 +359,38 @@ namespace Clustering
         return is;
     }
     
-    void Cluster::pickPoints(int k, Point pointArray[])
+    void Cluster::pickPoints(int k, PointPtr* pointArray)
     {
-        
+        //IF k >= Size
+        //IF
+        int index = 0;
+        pointArray[index] = points->p;
         
         int step = (size / k);
-        set_centroid(pointArray);
+        std::cout << step << endl;
         
-        for (int i = 0; i < k; i++)
+        
+        std::cout << *pointArray[index] << endl;
+        index++;
+        while(points->next != nullptr && points != nullptr && index <= k)
         {
-            pointArray += step;
-            std::cout << *pointArray << endl;
-            set_centroid(pointArray);
+            int counter = step;
+            while (counter != 0 && points->next != nullptr && points != nullptr)
+            {
+                points = points->next;
+                counter--;
+            }
+            pointArray[index] = points->p;
+            std::cout << *pointArray[index] << endl;
+            set_centroid(*pointArray[index]);
+            
+            //step += step;
+            
+            index++;
+            
         }
         
         
-        // DO add the point whose minimum distance from the selected
-        // max - min / k
-        // points is as large as possible (MAX)
-        // set_centroid
-        //        do
-        //        {
-        //
-        //        } while (i < k);
     }
     
     Point & Cluster::compute_centroid(Cluster &head)
@@ -404,6 +409,7 @@ namespace Clustering
             __centroid += *(currentNodePtr->p) / size;
             currentNodePtr = currentNodePtr->next;
         }
+        __centroid_valid = true;
         return __centroid;
         
     }
@@ -413,20 +419,19 @@ namespace Clustering
         return __centroid;
     }
     
-    void Cluster::set_centroid(const PointPtr &p)
+    void Cluster::set_centroid(const Point &p)
     {
-        
-        __centroid = *p;
+        __centroid = p;
+        __centroid_valid = true;
     }
     
-    // This is the sum of the distances between every two points in the cluster. Hint: This can be done in a double loop through the points of the cluster. However, this will count every distance twice, so you need to divide the sum by 2 before returning it.
     
     double Cluster::intraClusterDistance() const
     {
         LNodePtr previousPtr = nullptr;
         LNodePtr currentNodePtr = points;
         
-        int edges;
+        //int edges;
         double sum;
         while(currentNodePtr != nullptr)
         {
@@ -435,11 +440,11 @@ namespace Clustering
             while (currentNodePtr != nullptr)
             {
                 sum += (*currentNodePtr->p).distanceTo(*previousPtr->p);
-                edges++;
+                //edges++;
                 currentNodePtr = currentNodePtr->next;
             }
         }
-        return ((sum / 2) / edges);
+        return ((sum / 2) / this->getClusterEdges());
     }
     
     double interClusterDistance(const Cluster &c1, const Cluster &c2)
@@ -449,7 +454,7 @@ namespace Clustering
         nodePtrR = c2.points;
         
         double sum;
-        int edges;
+        //int edges;
         
         previousPtrL = nodePtrL;
         previousPtrR = nodePtrR;
@@ -463,13 +468,13 @@ namespace Clustering
             while (nodePtrL != nullptr && nodePtrR != nullptr)
             {
                 sum += (*nodePtrL->p).distanceTo(*nodePtrR->p);
-                edges++;
+                //edges++;
                 nodePtrL = nodePtrL->next;
                 nodePtrR = nodePtrR->next;
                 
             }
         }
-        return (sum / edges);
+        return (sum / getInterClusterEdges(c1, c2));
     }
     
     

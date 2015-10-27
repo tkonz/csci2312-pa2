@@ -8,6 +8,7 @@
 
 #include "point.h"
 #include "Cluster.h"
+#include "Kmeans.h"
 #include <iostream>
 #include <fstream>
 
@@ -15,6 +16,7 @@
 
 void testDestructor();
 
+const unsigned int DIM = 2;
 
 using namespace std;
 using std::stringstream;
@@ -144,24 +146,38 @@ int main()
     //    else
     //        cout << "not equal\n";
     
-    Cluster universe;
+    //
+    //    ifstream csv("/Users/Tish/Desktop/pa3-2312/points.txt");
+    //    //string line;
+    //    while (csv.is_open() && !csv.eof())
+    //    {
+    //        csv >> universe;
+    //        cout << "Point: " << universe << endl;
+    //
+    //    }
+    //    cout << "Point: " << universe << endl;
+    //    csv.close();
     
-    ifstream csv("/Users/Tish/Desktop/pa3-2312/points.txt");
-    //string line;
-    while (csv.is_open() && !csv.eof())
-    {
-        csv >> universe;
-        cout << "Point: " << universe << endl;
-        
-    }
-    cout << "Point: " << universe << endl;
-    csv.close();
+    Cluster universe(DIM);
+    int k = 5;
     
-    Cluster c;
-    Cluster c2;
+    Cluster c(DIM);
+    Cluster c2(DIM);
     
-    cout << c;
-    cout << c2;
+    Kmeans k1(k, DIM);
+    double num;
+    num = k1.computeClusteringScore();
+    
+    k1.kMeansAlgorithm();
+    
+    //cout << c;
+    //cout << c2;
+    
+    //Point p = universe[0];
+    //PointPtr array[5];
+    
+    //universe.pickPoints(k, array);
+    
     
     //cout << "Point: " << universe << endl;
     //cluster1.computeCentroid();
@@ -177,7 +193,7 @@ int main()
 
 void testDestructor(Point &p)
 {
-    Cluster x;
+    Cluster x(DIM);
     
     x.add(&p);
 }
