@@ -27,30 +27,23 @@ namespace Clustering {
         
         int size;
         LNodePtr points; // linked-list head
-        //friend class Centroid;
+        
     private:
-        
-        
         unsigned int __id;
         unsigned int __dimensionality;
-        // A static id generator method. It should be invoked by all constructors.
         static unsigned int __idGenerator;
         bool __centroid_valid;
-        
-        // Validate and invalidate a centroid and check for validity. Hint: Use a private boolean flag and corresponding methods. Any function or operator which changes the point composition of the cluster should invalidate its centroid.
-        
-        
         Point __centroid;
         
         
-        
-        
     public:
+        const Cluster get_Size() {return size;};
         const LNodePtr get_points() {return points;};
         
         unsigned int get_id() const {return __id;};
-        // Set the centroid. Should take a const Point &.
-        // Only the centroid setter and computer should set it back to valid.
+        
+        void makeCentroid();
+        
         void set_centroid(const Point &);
         
         const Point get_centroid();
@@ -59,17 +52,26 @@ namespace Clustering {
         
         bool get_centroid_valid() {return __centroid_valid;};
         
-        //to be able to specify whether the class should deallocate points that are pointed to by its nodes
         bool release_Points;
         
-        
+        double &operator[](int index); // TODO out-of-bds?
         // Need to add and unsigned int
         // Cluster (unsigned d) : __centroid (_dimensionality), _dimensionality(d);
+        Cluster() :
+        __dimensionality(0),
+        __centroid(0),
+        __id(0),
+        points(nullptr)
+        {size = 0;};
         Cluster(unsigned d) :
         __dimensionality(d),
         __centroid (__dimensionality),
-        __id(__idGenerator++)
-        {};
+        __id(__idGenerator++),
+        points(nullptr)
+        
+        {size = 0;};
+        
+        void setDimensionality(int dim) {__dimensionality = dim;};
         
         // The big three: cpy ctor, overloaded operator=, dtor
         Cluster(const Cluster &);
@@ -81,8 +83,44 @@ namespace Clustering {
         void add(const PointPtr &);
         const PointPtr &remove(const PointPtr &);
         
-        // Overloaded operators
+    public:
+        class iterator
+        {
+        private:
+            LNodePtr m_CurrentNode;
+        public:
+            friend class DoublyLinkedList;
+            iterator(LNodePtr node = NULL) : m_CurrentNode(node) {}
+            
+            PointPtr& operator*() const {return m_CurrentNode->p;}
+            
+            iterator& operator++()
+            {
+                m_CurrentNode = m_CurrentNode->next;
+                return *this;
+            }
+            
+            iterator operator++(int)
+            {
+                iterator temp = *this;
+                m_CurrentNode = m_CurrentNode->next;
+                return temp;
+            }
+            
+            bool operator== (const iterator other) const
+            {
+                return (m_CurrentNode == other.m_CurrentNode);
+            }
+            
+            bool operator !=(const iterator other) const
+            {
+                return (m_CurrentNode != other.m_CurrentNode);
+            }
+            
+        };
         
+        
+        // Overloaded operators
         // Set-preserving operators (do not duplicate points in the space)
         // Friends
         friend bool operator==(const Cluster &lhs, const Cluster &rhs);
@@ -94,11 +132,11 @@ namespace Clustering {
         Cluster &operator+=(const Point &rhs); // add point
         Cluster &operator-=(const Point &rhs); // remove point
         
-        double &operator[](int index);  // overload to access point
+        // returns an iterator to the first element in the list
+        iterator begin() {return iterator(points);};
         
         // Set-destructive operators (duplicate points in the space)
         // Friends
-        
         
         friend const Cluster operator+(const Cluster &lhs, const Cluster &rhs);
         friend const Cluster operator-(const Cluster &lhs, const Cluster &rhs);
@@ -111,11 +149,13 @@ namespace Clustering {
         friend std::istream &operator>>(std::istream &, Cluster &);
         friend std::istream &operator>>(std::istream &, Cluster &);
         
-        //  to pick k points from a cluster that would serve as the initial set of centroids. The function takes in a Point array that it needs to populate. You are free to implement the selection strategy as you wish. Hint: Generally, the more distant the points from each other, the better for the outcome of the KMeans algorithm. You might use the fact that points in a Cluster are sorted lexicographically. At the very least, don't pick the first k :)
-        void pickPoints(int k, PointPtr *pointArray);
+        void pickPoints(int k, PointPtr pointArray[]);
         
         // A public getter for the size. It will be helpful with testing and debugging your KMeans implementation.
         const int getSize() {return size;};
+        
+        // returns an iterator to the first element in the list
+        
         
         class Move
         {
@@ -143,15 +183,10 @@ namespace Clustering {
             
         };
         
-        // Methods for scoring the clustering (used in the requirements for KMeans):
-        // Same thing as (1), but between two clusters.
         double intraClusterDistance() const;
         
-        // This is the sum of the distances between every two points in the cluster. Hint: This can be done in a double loop through the points of the cluster. However, this will count every distance twice, so you need to divide the sum by 2 before returning it.
         friend double interClusterDistance(const Cluster &c1, const Cluster &c2);
         
-        
-        // This returns the number of distinct edges in a cluster. (That is, every two distinct points have an imaginary edge between them. It's length is the distance between the two points.) This is simply size * (size - 1) / 2, where size is the size of the cluster.
         int getClusterEdges() const {return (size * (size - 1) / 2);};
         
         friend int getInterClusterEdges(const Cluster &c1, const Cluster &c2)

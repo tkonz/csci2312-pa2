@@ -15,20 +15,24 @@
 namespace Clustering
 {
     
-    Point::Point(int dimensions)
+    Point::Point(unsigned int dimensions)
     {
-        dim = dimensions;
+        __dimensionality = dimensions;
         values = new double[dimensions];
     }
     
     Point::Point(const Point &p)
     {
-        this->dim = p.getDimensions();
-        values = new double[dim];
-        for (int i = 0; i < dim; i++)
+        this->__dimensionality = p.getDimensions();
+        values = new double[__dimensionality];
+        for (int i = 0; i < __dimensionality; i++)
         {
             values[i] = p.values[i];
         }
+    }
+    void Point::setDimensionality(unsigned n)
+    {
+        __dimensionality = n;
     }
     
     void Point::setValue(int dimension, double p)
@@ -47,18 +51,19 @@ namespace Clustering
         if (this == &p)
             return *this;
         
-        if (this->dim != p.dim)
+        if (this->__dimensionality != p.__dimensionality)
         {
             delete [] values;
-            values = new double[p.dim];
+            values = new double[p.__dimensionality];
         }
-        
-        this->dim = p.dim;
-        for (int i = 0; i < p.dim; i++)
+        //        if (!dim)
+        //            dim = p.dim;
+        for (int i = 0; i < p.__dimensionality; i++)
         {
             values[i] = p.values[i];
             
         }
+        
         return *this;
     }
     
@@ -70,7 +75,7 @@ namespace Clustering
     
     Point& Point::operator*=(double scalar)
     {
-        for (int i = 0; i < dim; i++)
+        for (int i = 0; i < __dimensionality; i++)
         {
             values[i] *= scalar;
         }
@@ -79,7 +84,7 @@ namespace Clustering
     
     Point& Point::operator/=(double scalar)
     {
-        for (int i = 0; i < dim; i++)
+        for (int i = 0; i < __dimensionality; i++)
         {
             values[i] /= scalar;
         }
@@ -88,7 +93,7 @@ namespace Clustering
     
     const Point Point::operator*(double scalar) const
     {
-        for (int i = 0; i < dim; i++)
+        for (int i = 0; i < __dimensionality; i++)
         {
             values[i] *= scalar;
         }
@@ -98,8 +103,8 @@ namespace Clustering
     const Point Point::operator*(const Point &p)
     {
         double product = 0;
-        Point temp(p.dim);
-        for (int i = 0; i < p.dim; i++)
+        Point temp(p.__dimensionality);
+        for (int i = 0; i < p.__dimensionality; i++)
         {
             product = this->values[i] * p.values[i];
             temp.setValue(i+1, product);
@@ -110,7 +115,7 @@ namespace Clustering
     const Point Point::operator/(double scalar) const
     {
         
-        for (int i = 0; i < dim; i++)
+        for (int i = 0; i < __dimensionality; i++)
         {
             values[i] /= scalar;
         }
@@ -121,8 +126,8 @@ namespace Clustering
     double Point::distanceTo(const Point &p) const
     {
         double sum;
-        if (p.dim == dim)
-            for (int i = 0; i < dim; i++)
+        if (p.__dimensionality == __dimensionality)
+            for (int i = 0; i < __dimensionality; i++)
             {
                 double difference = values[i] - p.values[i];
                 sum += difference * difference;
@@ -134,7 +139,7 @@ namespace Clustering
     Point &operator+=(Point & p, const Point &q)
     {
         // check dimensions ==
-        for (int i = 0; i < p.dim; i++)
+        for (int i = 0; i < p.__dimensionality; i++)
         {
             p.values[i] += q.values[i];
         }
@@ -144,7 +149,7 @@ namespace Clustering
     Point &operator-=(Point &p, const Point &q)
     {
         // check dimensions ==
-        for (int i = 0; i < p.dim; i++)
+        for (int i = 0; i < p.__dimensionality; i++)
         {
             p.values[i] -= q.values[i];
         }
@@ -154,8 +159,8 @@ namespace Clustering
     const Point operator+(const Point &p, const Point &q)
     {
         
-        Point temp(p.dim);
-        for (int i = 0; i < p.dim; i++)
+        Point temp(p.__dimensionality);
+        for (int i = 0; i < p.__dimensionality; i++)
         {
             double sum;
             sum = p.values[i] + q.values[i];
@@ -168,8 +173,8 @@ namespace Clustering
     {
         // check dimensions ==
         
-        Point temp(p.dim);
-        for (int i = 0; i < p.dim; i++)
+        Point temp(p.__dimensionality);
+        for (int i = 0; i < p.__dimensionality; i++)
         {
             double difference;
             difference = p.values[i] - q.values[i];
@@ -186,7 +191,7 @@ namespace Clustering
         {
             bool equal = true;
             //std::cout << "bool = " << equal << std::endl;
-            for (int i = 0; i < p.dim; i++)
+            for (int i = 0; i < p.__dimensionality; i++)
             {
                 if (p.values[i] == q.values[i])
                 {
@@ -210,7 +215,7 @@ namespace Clustering
         if (p.getDimensions() == q.getDimensions())
         {
             
-            for (int i = 0; i < p.dim; i++)
+            for (int i = 0; i < p.__dimensionality; i++)
             {
                 if (p.values[i] == q.values[i])
                 {
@@ -230,21 +235,23 @@ namespace Clustering
     bool operator<(const Point &p, const Point &q)
     {
         bool lessThan = false;
-        if (p.dim != q.dim)
+        if (p.__dimensionality != q.__dimensionality)
         {
             return 0;
         }
         
-        for (int i = 0; i < p.dim; i++)
+        for (int i = 0; i < p.__dimensionality; i++)
         {
             if (p.values[i] > q.values[i])
             {
                 lessThan = false;
+                break;
                 
             }
-            if (p.values[i] < q.values[i])
+            else if(p.values[i] < q.values[i])
             {
                 lessThan = true;
+                break;
             }
         }
         return lessThan;
@@ -253,20 +260,22 @@ namespace Clustering
     bool operator>(const Point &p, const Point &q)
     {
         bool greaterThan = false;
-        if (p.dim == q.dim)
+        if (p.__dimensionality == q.__dimensionality)
         {
             greaterThan = true;
         }
         
-        for (int i = 0; i < p.dim; i++)
+        for (int i = 0; i < p.__dimensionality; i++)
         {
             if (p.values[i] > q.values[i])
             {
                 greaterThan = true;
+                break;
             }
             if (p.values[i] < q.values[i])
             {
                 greaterThan = false;
+                break;
             }
         }
         return greaterThan;
@@ -275,9 +284,9 @@ namespace Clustering
     bool operator<=(const Point &p, const Point &q)
     {
         bool equal = false;
-        if (p.dim == q.dim)
+        if (p.__dimensionality == q.__dimensionality)
         {
-            for (int i = 0; i < p.dim; i++)
+            for (int i = 0; i < p.__dimensionality; i++)
             {
                 if (p.values[i] < q.values[i] || p.values[i] == q.values[i])
                 {
@@ -293,9 +302,9 @@ namespace Clustering
     bool operator>=(const Point &p, const Point &q)
     {
         bool equal = false;
-        if (p.dim == q.dim)
+        if (p.__dimensionality == q.__dimensionality)
         {
-            for (int i = 0; i < p.dim; i++)
+            for (int i = 0; i < p.__dimensionality; i++)
             {
                 if (p.values[i] > q.values[i] || p.values[i] == q.values[i])
                 {
@@ -313,24 +322,27 @@ namespace Clustering
     std::ostream &operator<<(std::ostream &os, const Point &p)
     {
         //os << "(";
-        
-        cout << std::fixed << std::setprecision(1);
-        for (int index = 0; index < p.dim; index++)
+        if (p.values)
         {
-            
-            os << p.values[index];
-            if (index == (p.dim-1))
+            cout << std::fixed << std::setprecision(1);
+            for (int index = 0; index < p.__dimensionality; index++)
             {
-                //os << endl;
                 
+                os << p.values[index];
+                if (index == (p.__dimensionality-1))
+                {
+                    //os << endl;
+                    
+                }
+                else
+                {
+                    os << ", ";
+                }
             }
-            else
-            {
-                os << ", ";
-            }
+            //os << std::endl;
         }
-        //os << std::endl;
         return os;
+        
     }
     
     std::istream &operator>>(std::istream &is, Point &p)
@@ -354,4 +366,3 @@ namespace Clustering
     }
     
 }
-

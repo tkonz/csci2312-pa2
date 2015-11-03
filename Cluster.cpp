@@ -27,24 +27,32 @@ namespace Clustering
         }
         this -> size = 0;
         
-        
-        
-        LNodePtr headNode = new LNode;
-        headNode->p = c.points->p;
-        this->points = headNode;
-        LNodePtr previousPtr = headNode;
-        LNodePtr cursor = c.points->next;
-        
-        while (cursor != nullptr)
+        if (c.size == 0)
         {
-            LNodePtr newNode = new LNode;
-            newNode->p = cursor->p;
-            previousPtr->next = newNode;
-            previousPtr = newNode;
-            cursor = cursor->next;
+            this->__dimensionality = c.__dimensionality;
+            this->points = nullptr;
+            std::cout << "Creating Empty Cluster\n";
         }
-        this->size = c.size;
         
+        else if (c.points->p != nullptr)
+        {
+            LNodePtr headNode = new LNode;
+            
+            headNode->p = c.points->p;
+            this->points = headNode;
+            LNodePtr previousPtr = headNode;
+            LNodePtr cursor = c.points->next;
+            
+            while (cursor != nullptr)
+            {
+                LNodePtr newNode = new LNode;
+                newNode->p = cursor->p;
+                previousPtr->next = newNode;
+                previousPtr = newNode;
+                cursor = cursor->next;
+            }
+            this->size = c.size;
+        }
     }
     
     
@@ -55,11 +63,16 @@ namespace Clustering
         {
             return *this;
         }
-        if (this->size != c.size && this->size != 0)
+        if (c.size == 0)
+        {
+            size = 0;
+            return *this;
+        }
+        if (points->p && this->size != c.size && this->size != 0)
         {
             LNodePtr currentNodePtr = points; // Initialize nodePtr to head of list
             LNodePtr nextNodePtr = nullptr;
-            while (currentNodePtr->p != nullptr && currentNodePtr->next != nullptr)
+            while (currentNodePtr != nullptr && currentNodePtr->p != nullptr)
             {
                 nextNodePtr = currentNodePtr->next;
                 if (!nextNodePtr->p)
@@ -85,7 +98,6 @@ namespace Clustering
             cursor = cursor->next;
         }
         this->size = c.size;
-        __idGenerator++;
         return *this;
         
     }
@@ -359,58 +371,68 @@ namespace Clustering
         return is;
     }
     
-    void Cluster::pickPoints(int k, PointPtr* pointArray)
+    void Cluster::pickPoints(int k, PointPtr pointArray[])
     {
         //IF k >= Size
         //IF
         int index = 0;
-        pointArray[index] = points->p;
+        
+        Cluster::iterator it = points;
+        // put first point in pointArray[index]
+        pointArray[index] = *it;
+        
+        __centroid=*(pointArray[index]);
+        //cout << "set centroid: " << __centroid << std::endl;
+        
+        
         
         int step = (size / k);
-        std::cout << step << endl;
         
-        
-        std::cout << *pointArray[index] << endl;
+        //std::cout << *pointArray[index] << endl;
         index++;
-        while(points->next != nullptr && points != nullptr && index <= k)
+        while(points->next != nullptr && points->p != nullptr && index < k)
         {
             int counter = step;
-            while (counter != 0 && points->next != nullptr && points != nullptr)
+            while (counter != 0 && points->next != nullptr && points->p != nullptr)
             {
-                points = points->next;
+                it = ++it;
                 counter--;
             }
-            pointArray[index] = points->p;
-            std::cout << *pointArray[index] << endl;
-            set_centroid(*pointArray[index]);
-            
-            //step += step;
+            pointArray[index] = *it;
+            __centroid=*(pointArray[index]);
+            //cout << "set centroid: " << __centroid << std::endl;
+            //std::cout << *(pointArray[index]);
             
             index++;
             
         }
         
-        
     }
     
     Point & Cluster::compute_centroid(Cluster &head)
     {
-        LNodePtr currentNodePtr = head.points; // Initialize nodePtr to head of list
+        Cluster::iterator it = head.points; // Initialize iterator to head of list
         double size = head.size;
         
-        if (currentNodePtr != nullptr && currentNodePtr->next != nullptr)
+        if (it != nullptr && it++ != nullptr)
             // if the linked list isn't empty and if the linked list isn't just size 1 (have seperate code to deal with those)
-            
-            __centroid = *(currentNodePtr->p) / size;
-        currentNodePtr = currentNodePtr->next;
+            __centroid = **it / size;
+        it = ++it;
         
-        while (currentNodePtr != nullptr)
+        while (it != nullptr)
         {
-            __centroid += *(currentNodePtr->p) / size;
-            currentNodePtr = currentNodePtr->next;
+            __centroid += **it / size;
+            it = ++it;
         }
+        std::cout << "new centroid = " << __centroid;
         __centroid_valid = true;
         return __centroid;
+        
+    }
+    
+    void Cluster::makeCentroid()
+    {
+        __centroid.setDimensionality(__dimensionality);
         
     }
     
@@ -419,10 +441,19 @@ namespace Clustering
         return __centroid;
     }
     
+    
     void Cluster::set_centroid(const Point &p)
     {
-        __centroid = p;
+        //CENTROID HERE IS NULL?? Do I need dynamic Point? Having problems
+        //assigning p to __centroid
+        //defined as         Point __centroid = *new Point(__dimensionality);
+        //in Cluster private member
+        
+        cout << __dimensionality;
+        //__centroid.setDimensionality(__dimensionality);
+        __centroid =  p;
         __centroid_valid = true;
+        cout << "set centroid: " << __centroid << std::endl;
     }
     
     
@@ -431,17 +462,28 @@ namespace Clustering
         LNodePtr previousPtr = nullptr;
         LNodePtr currentNodePtr = points;
         
-        //int edges;
-        double sum;
-        while(currentNodePtr != nullptr)
+        double sum = 0;
+        if (size == 0)
+        {
+            return 0;
+        }
+        while(currentNodePtr && currentNodePtr->p)
         {
             previousPtr = currentNodePtr;
             currentNodePtr = currentNodePtr->next;
-            while (currentNodePtr != nullptr)
+            while (currentNodePtr != nullptr && previousPtr->p != nullptr)
             {
-                sum += (*currentNodePtr->p).distanceTo(*previousPtr->p);
-                //edges++;
-                currentNodePtr = currentNodePtr->next;
+                if (!(currentNodePtr->p))
+                {
+                    sum = 0;
+                    break;
+                }
+                
+                else
+                {
+                    sum += (*(currentNodePtr->p)).distanceTo(*(previousPtr->p));
+                    currentNodePtr = currentNodePtr->next;
+                }
             }
         }
         return ((sum / 2) / this->getClusterEdges());
@@ -450,27 +492,40 @@ namespace Clustering
     double interClusterDistance(const Cluster &c1, const Cluster &c2)
     {
         LNodePtr nodePtrL, nodePtrR, previousPtrL, previousPtrR;
+        if (c1.size == 0 || c2.size == 0)
+        {
+            return 0;
+        }
+        
         nodePtrL = c1.points;
         nodePtrR = c2.points;
         
         double sum;
-        //int edges;
+        
         
         previousPtrL = nodePtrL;
         previousPtrR = nodePtrR;
         
         while (nodePtrL != nullptr && nodePtrR != nullptr)
         {
+            if (!(nodePtrL->p && nodePtrR->p))
+            {
+                sum = 0;
+                break;
+            }
             previousPtrL = nodePtrL;
             previousPtrR = nodePtrR;
+            
             nodePtrL = nodePtrL->next;
             nodePtrR = nodePtrR->next;
             while (nodePtrL != nullptr && nodePtrR != nullptr)
             {
-                sum += (*nodePtrL->p).distanceTo(*nodePtrR->p);
-                //edges++;
-                nodePtrL = nodePtrL->next;
-                nodePtrR = nodePtrR->next;
+                if (nodePtrL->p != nullptr && nodePtrR->p != nullptr)
+                {
+                    sum += (*(nodePtrL->p)).distanceTo(*(nodePtrR->p));
+                    nodePtrL = nodePtrL->next;
+                    nodePtrR = nodePtrR->next;
+                }
                 
             }
         }
@@ -478,6 +533,5 @@ namespace Clustering
     }
     
     
-    
-    
 }
+

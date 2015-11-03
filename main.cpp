@@ -158,15 +158,15 @@ int main()
     //    cout << "Point: " << universe << endl;
     //    csv.close();
     
-    Cluster universe(DIM);
-    int k = 5;
+    //    Cluster universe(DIM);
+    int k = 3;
     
-    Cluster c(DIM);
-    Cluster c2(DIM);
+    //    Cluster c(DIM);
+    //    Cluster c2(DIM);
     
     Kmeans k1(k, DIM);
-    double num;
-    num = k1.computeClusteringScore();
+    //double num;
+    //num = k1.computeClusteringScore();
     
     k1.kMeansAlgorithm();
     

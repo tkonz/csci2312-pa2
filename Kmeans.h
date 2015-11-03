@@ -27,7 +27,7 @@ namespace Clustering
         static double SCORE_DIFF_THRESHOLD;
         int __dimensionality;
         Cluster point_space;
-        ClusterPtr vec = new Cluster(__dimensionality);
+        ClusterPtr clusterVec;
         
     public:
         Kmeans(int k, int dim) :
@@ -45,14 +45,16 @@ namespace Clustering
                 
             }
             cout << "Point: " << point_space << endl;
+            cout << point_space.get_Size();
             csv.close();
             
         };
-        
+        void initializeCentroids();
+        void initializeClusters();
         double computeClusteringScore();
         
         void kMeansAlgorithm();
-        
+        void printClusters();
         
     };
     
