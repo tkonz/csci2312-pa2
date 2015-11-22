@@ -12,26 +12,27 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include "Cluster.h"
 #include "Point.h"
 
 namespace Clustering
 {
-    typedef Cluster *ClusterPtr;
+    //typedef Cluster ClusterPtr;
     class Kmeans
     {
     private:
-        int __k;
+        int m_k;
         double oldScore, newScore;
         double scoreDiff;
         static double SCORE_DIFF_THRESHOLD;
         int __dimensionality;
         Cluster point_space;
-        ClusterPtr clusterVec;
+        std::vector <Cluster> clusterVec;
         
     public:
         Kmeans(int k, int dim) :
-        __k(k),
+        m_k(k),
         __dimensionality(dim),
         // initial cluster called point_space initialized in Kmeans constructor
         point_space(__dimensionality)
@@ -45,12 +46,13 @@ namespace Clustering
                 
             }
             cout << "Point: " << point_space << endl;
-            cout << point_space.get_Size();
+            //cout << point_space.get_Size();
             csv.close();
             
         };
         void initializeCentroids();
         void initializeClusters();
+        Cluster* findNearestCentroid(Point&);
         double computeClusteringScore();
         
         void kMeansAlgorithm();

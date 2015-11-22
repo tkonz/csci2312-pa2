@@ -12,26 +12,27 @@ double MAX = DBL_MAX;
 
 namespace Clustering
 {
-    double Kmeans::SCORE_DIFF_THRESHOLD = .1;
+    double Kmeans::SCORE_DIFF_THRESHOLD = .75;
     
+    //FIX logic here
     double Kmeans::computeClusteringScore()
     {
         double score;
         double inner;
         double outer = 0.0;
         
-        for (int i = 0; i < __k; i++)
+        for (int i = 0; i < m_k; i++)
         {
-            
-            outer = clusterVec[i].intraClusterDistance() / clusterVec[i].getClusterEdges();
-            for (int j = 1; j < __k; j++)
+            std::cout << clusterVec[i].getClusterEdges() << endl;
+            if (clusterVec[i].getClusterEdges() == 0)
+                break;
+            outer += clusterVec[i].intraClusterDistance() / clusterVec[i].getClusterEdges();
+            for (int j = 1; j < m_k; j++)
             {
-                
                 inner += interClusterDistance(clusterVec[i], clusterVec[j]);
-                
             }
         }
-        score = outer / inner;
+        score = inner / outer;
         
         return score;
     }
@@ -41,86 +42,90 @@ namespace Clustering
     void Kmeans::initializeClusters()
     {
         //clusterVec = &point_space;
-        clusterVec = new Cluster[__k];
-        
-        for (int i = 1; i < __k-1; i++)
-        {
-            clusterVec[i].setDimensionality(__dimensionality);
-        }
-        
+        clusterVec.push_back(point_space);
+        for (int i = 1; i < m_k; i++)
+            clusterVec.push_back(i);
+        for (int i = 0; i < m_k; i++)
+            std::cout << clusterVec[i] << endl;
     }
+    
     
     void Kmeans::initializeCentroids()
     {
         initializeClusters();
-        PointPtr *pointArray = new PointPtr[__k];
-        std::cout << pointArray[0];
-        
-        
-        point_space.pickPoints(__k, pointArray);
-        for (int i = 0; i < __k; i++)
+        std::vector<Point> pointVec;
+        point_space.pickPoints(m_k, pointVec);
+        for (int i = 0; i < m_k; i++)
         {
-            cout << *(pointArray[i]) << endl;
+            cout << pointVec[i] << endl;
         }
         
-        clusterVec[0].set_centroid(*pointArray[0]);
-        for (int i = 1; i < __k; i++)
+        clusterVec[0].set_centroid(pointVec[0]);
+        for (int i = 1; i < m_k; i++)
         {
-            clusterVec[i].set_centroid(*pointArray[i]);
+            clusterVec[i].set_centroid(pointVec[i]);
+            //std::cout << clusterVec[i].get_centroid();
         }
+    }
+    
+    Cluster* Kmeans::findNearestCentroid(Point &p)
+    {
+        Cluster *c = &clusterVec[0];
+        double distance = 0;
+        distance = p.distanceTo(clusterVec[0].get_centroid());
+        for (int i = 1; i < m_k; i++)
+        {
+            if (p.distanceTo(clusterVec[i].get_centroid()) < distance)
+            {
+                distance = p.distanceTo(clusterVec[i].get_centroid());
+                c = &clusterVec[i];
+            }
+        }
+        return c;
     }
     
     void Kmeans::kMeansAlgorithm()
     {
         initializeCentroids();
-        oldScore = MAX;
+        oldScore = 0;
         scoreDiff = SCORE_DIFF_THRESHOLD + 1;
+        int i  = 0;
         
         //while loop until scoreDiff < SCORE_DIFF_THRESHOLD
         while (scoreDiff > SCORE_DIFF_THRESHOLD)
         {
-            // Loop through all clusters with outer for
-            for (int h = 0; h < __k; h++)
+            std::vector<Cluster>::iterator it = clusterVec.begin(); // cluster[i]
+            // Loop through all clusters with outer for loop
+            for (int counter = 0; counter < m_k; counter++)
             {
-                //std::cout << "Cluster: " << clusterVec[h];
+                std::forward_list<Point>::iterator list = (*it).m_Points.begin();
                 
-                // Loop through all points in this cluster with inner for
-                
-                Cluster::iterator it = clusterVec[h].begin();
-                
-                for (int i = 1; i < clusterVec[h].getSize(); i++)
+                while (list != (*it).m_Points.end()) // Loop through all points in this cluster with while
                 {
-                    while (it != nullptr) // while not at end of list of pointptrs
+                    Cluster *cluster = findNearestCentroid(*list);
+                    if (cluster != &clusterVec[i])
                     {
-                        newScore = clusterVec[i].get_centroid().distanceTo(**it); // get distance from current cluster's
-                        // centroid to current point
+                        // create a move object of point, with two clusters and perform move
                         
-                        if (newScore < oldScore) // if new distance is less than old distance,
-                        {
-                            Cluster::Move m(*it, &clusterVec[h], &clusterVec[i]); // create a move object of point, with two                    clusters
-                            m.perform();                                  // and perfrom move
-                        }
-                        it = ++it;
-                        //newScore = computeClusteringScore();
+                        Cluster::Move m(&*list, &clusterVec[i], cluster);
+                        m.perform();
                     }
-                }//end inner for loop of one cluster
-            }//end outer for loop of another cluster
-            
-            //loop through all clusters
-            //if centroid invalid
-            //compute and set valid to true
-            
-            for (int h = 0; h < __k; h++)
+                    //it = ++it;
+                    list = ++list;
+                }//end while loop
+                it = ++it;
+            }// end for loop
+            for (int h = 0; h < m_k; h++)
             {
                 if (clusterVec[h].get_centroid_valid() == false)
                 {
-                    clusterVec[h].set_centroid(clusterVec[h].compute_centroid(clusterVec[h]));
+                    clusterVec[h].compute_centroid(clusterVec[h]);
+                    //clusterVec[h].set_centroid(cen);
                 }
             }
             //compute new clustering score
-            newScore = computeClusteringScore(); // (ivogeorg)
+            newScore = computeClusteringScore();
             //compute absolute difference and set scoreDiff
-            // (ivogeorg)
             scoreDiff = std::abs(oldScore - newScore);
             
         }//end while loop
@@ -129,12 +134,10 @@ namespace Clustering
     
     void Kmeans::printClusters()
     {
-        for (int i = 0; i < __k; i++)
+        for (int i = 0; i < m_k; i++)
         {
             cout << clusterVec[i] << endl;
         }
     }
     
-    
 }
-

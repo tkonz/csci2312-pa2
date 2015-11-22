@@ -1,10 +1,11 @@
 //
-//  Point.cpp
-//  pa2-ucd
+//  point.cpp
+//  pa4_ucd2312
 //
-//  Created by Tisha Konz on 9/17/15.
+//  Created by Tisha Konz on 10/29/15.
 //  Copyright (c) 2015 Tisha Konz. All rights reserved.
 //
+
 
 #include "point.h"
 #include <cmath>
@@ -14,122 +15,106 @@
 
 namespace Clustering
 {
-    
-    Point::Point(unsigned int dimensions)
-    {
-        __dimensionality = dimensions;
-        values = new double[dimensions];
-    }
+    unsigned int Point::m_IdGenerator = 0;
     
     Point::Point(const Point &p)
     {
-        this->__dimensionality = p.getDimensions();
-        values = new double[__dimensionality];
-        for (int i = 0; i < __dimensionality; i++)
+        this->m_Dimensionality = p.m_Dimensionality;
+        for (std::vector<double>::const_iterator it = p.m_Values.begin(); it != p.m_Values.end(); ++it)
         {
-            values[i] = p.values[i];
+            m_Values.push_back(*it);
         }
+        this->m_Id = p.m_Id;
     }
+    
     void Point::setDimensionality(unsigned n)
     {
-        __dimensionality = n;
+        m_Dimensionality = n;
     }
     
     void Point::setValue(int dimension, double p)
     {
-        values[dimension - 1] = p;
+        this->m_Dimensionality = dimension;
+        m_Values.push_back(p);
     }
     
     double Point::getValue(int dimension) const
     {
-        return values[dimension-1];
+        return m_Values[dimension-1];
     }
+    
     
     Point& Point::operator=(const Point &p)
     {
-        // check for self-assignment
         if (this == &p)
             return *this;
-        
-        if (this->__dimensionality != p.__dimensionality)
+        if (this->m_Dimensionality != p.m_Dimensionality)
         {
-            delete [] values;
-            values = new double[p.__dimensionality];
-        }
-        //        if (!dim)
-        //            dim = p.dim;
-        for (int i = 0; i < p.__dimensionality; i++)
-        {
-            values[i] = p.values[i];
+            this->m_Dimensionality = p.m_Dimensionality;
             
+        }
+        
+        this->m_Id = p.m_Id;
+        
+        for (std::vector<double>::const_iterator it = p.m_Values.begin(); it != p.m_Values.end(); ++it)
+        {
+            m_Values.push_back(*it);
         }
         
         return *this;
     }
     
-    Point::~Point()
-    {
-        delete [] values;
-        //cout << "Entered Point destructor";
-    }
-    
     Point& Point::operator*=(double scalar)
     {
-        for (int i = 0; i < __dimensionality; i++)
+        for (std::vector<double>::iterator it = m_Values.begin(); it != m_Values.end(); ++it)
         {
-            values[i] *= scalar;
+            m_Values[*it] *= scalar;
         }
         return *this;
     }
     
     Point& Point::operator/=(double scalar)
     {
-        for (int i = 0; i < __dimensionality; i++)
+        for (std::vector<double>::iterator it = m_Values.begin(); it != m_Values.end(); ++it)
         {
-            values[i] /= scalar;
+            m_Values[*it] /= scalar;
         }
         return *this;
     }
     
     const Point Point::operator*(double scalar) const
     {
-        for (int i = 0; i < __dimensionality; i++)
-        {
-            values[i] *= scalar;
-        }
-        return *this;
-    }
-    
-    const Point Point::operator*(const Point &p)
-    {
         double product = 0;
-        Point temp(p.__dimensionality);
-        for (int i = 0; i < p.__dimensionality; i++)
+        Point temp(m_Dimensionality);
+        for (std::vector<double>::const_iterator it = m_Values.begin(); it != m_Values.end(); ++it)
         {
-            product = this->values[i] * p.values[i];
-            temp.setValue(i+1, product);
+            product = *it * scalar;
+            temp.setValue(*it, product);
         }
         return temp;
     }
     
+    
     const Point Point::operator/(double scalar) const
     {
-        
-        for (int i = 0; i < __dimensionality; i++)
+        double quotient = 0;
+        Point temp(m_Dimensionality);
+        for (std::vector<double>::const_iterator it = m_Values.begin(); it != m_Values.end(); ++it)
         {
-            values[i] /= scalar;
+            quotient = *it / scalar;
+            temp.setValue(*it, quotient);
         }
-        return *this;
+        return temp;
     }
-    
     
     double Point::distanceTo(const Point &p) const
     {
-        double sum;
-        if (p.__dimensionality == __dimensionality)
-            for (int i = 0; i < __dimensionality; i++)
+        double sum = 0;
+        if (p.m_Dimensionality == m_Dimensionality)
+            for (int i = 0; i < m_Dimensionality; i++)
             {
-                double difference = values[i] - p.values[i];
+                double difference = 0;
+                difference = m_Values[i] - p.m_Values[i];
                 sum += difference * difference;
             }
         return sqrt(sum);
@@ -139,9 +124,9 @@ namespace Clustering
     Point &operator+=(Point & p, const Point &q)
     {
         // check dimensions ==
-        for (int i = 0; i < p.__dimensionality; i++)
+        for (int i = 0; i < p.m_Dimensionality; i++)
         {
-            p.values[i] += q.values[i];
+            p.m_Values[i] += q.m_Values[i];
         }
         return p;
     }
@@ -149,9 +134,9 @@ namespace Clustering
     Point &operator-=(Point &p, const Point &q)
     {
         // check dimensions ==
-        for (int i = 0; i < p.__dimensionality; i++)
+        for (int i = 0; i < p.m_Dimensionality; i++)
         {
-            p.values[i] -= q.values[i];
+            p.m_Values[i] -= q.m_Values[i];
         }
         return p;
     }
@@ -159,12 +144,13 @@ namespace Clustering
     const Point operator+(const Point &p, const Point &q)
     {
         
-        Point temp(p.__dimensionality);
-        for (int i = 0; i < p.__dimensionality; i++)
+        Point temp(p.m_Dimensionality);
+        
+        for (int i = 0; i < p.m_Dimensionality; i++)
         {
             double sum;
-            sum = p.values[i] + q.values[i];
-            temp.values[i] = sum;
+            sum = p.m_Values[i] + q.m_Values[i];
+            temp.m_Values.push_back(sum);
         }
         return temp;
     }
@@ -173,34 +159,34 @@ namespace Clustering
     {
         // check dimensions ==
         
-        Point temp(p.__dimensionality);
-        for (int i = 0; i < p.__dimensionality; i++)
+        Point temp(p.m_Dimensionality);
+        for (int i = 0; i < p.m_Dimensionality; i++)
         {
             double difference;
-            difference = p.values[i] - q.values[i];
-            temp.values[i] = difference;
+            difference = p.m_Values[i] - q.m_Values[i];
+            temp.m_Values.push_back(difference);
         }
         return temp;
     }
+    
+    
     
     bool operator==(const Point &p, const Point &q)
     {
         bool equal = false;
         //std::cout << "bool = " << equal << std::endl;
-        if (p.getDimensions() == q.getDimensions())
+        if (p.m_Dimensionality == q.m_Dimensionality)
         {
             bool equal = true;
             //std::cout << "bool = " << equal << std::endl;
-            for (int i = 0; i < p.__dimensionality; i++)
+            for (int i = 0; i < p.m_Dimensionality; i++)
             {
-                if (p.values[i] == q.values[i])
+                if (p.m_Values[i] == q.m_Values[i])
                 {
                     equal = true;
-                    //std::cout << "bool = " << equal << std::endl;
                 }
                 else
                 {
-                    
                     equal = false;
                 }
             }
@@ -214,10 +200,13 @@ namespace Clustering
         bool notEqual = true;
         if (p.getDimensions() == q.getDimensions())
         {
-            
-            for (int i = 0; i < p.__dimensionality; i++)
+            if (p.m_Id == q.m_Id)
             {
-                if (p.values[i] == q.values[i])
+                notEqual = false;
+            }
+            for (int i = 0; i < p.m_Dimensionality; i++)
+            {
+                if (p.m_Values[i] == q.m_Values[i])
                 {
                     notEqual = false;
                     
@@ -232,23 +221,24 @@ namespace Clustering
         return notEqual;
     }
     
+    
     bool operator<(const Point &p, const Point &q)
     {
         bool lessThan = false;
-        if (p.__dimensionality != q.__dimensionality)
+        if (p.m_Dimensionality != q.m_Dimensionality)
         {
             return 0;
         }
         
-        for (int i = 0; i < p.__dimensionality; i++)
+        for (int i = 0; i < p.m_Dimensionality; i++)
         {
-            if (p.values[i] > q.values[i])
+            if (p.m_Values[i] > q.m_Values[i])
             {
                 lessThan = false;
                 break;
                 
             }
-            else if(p.values[i] < q.values[i])
+            else if(p.m_Values[i] < q.m_Values[i])
             {
                 lessThan = true;
                 break;
@@ -260,19 +250,19 @@ namespace Clustering
     bool operator>(const Point &p, const Point &q)
     {
         bool greaterThan = false;
-        if (p.__dimensionality == q.__dimensionality)
+        if (p.m_Dimensionality == q.m_Dimensionality)
         {
             greaterThan = true;
         }
         
-        for (int i = 0; i < p.__dimensionality; i++)
+        for (int i = 0; i < p.m_Dimensionality; i++)
         {
-            if (p.values[i] > q.values[i])
+            if (p.m_Values[i] > q.m_Values[i])
             {
                 greaterThan = true;
                 break;
             }
-            if (p.values[i] < q.values[i])
+            if (p.m_Values[i] < q.m_Values[i])
             {
                 greaterThan = false;
                 break;
@@ -284,11 +274,11 @@ namespace Clustering
     bool operator<=(const Point &p, const Point &q)
     {
         bool equal = false;
-        if (p.__dimensionality == q.__dimensionality)
+        if (p.m_Dimensionality == q.m_Dimensionality)
         {
-            for (int i = 0; i < p.__dimensionality; i++)
+            for (int i = 0; i < p.m_Dimensionality; i++)
             {
-                if (p.values[i] < q.values[i] || p.values[i] == q.values[i])
+                if (p.m_Values[i] < q.m_Values[i] || p.m_Values[i] == q.m_Values[i])
                 {
                     equal = true;
                     break;
@@ -302,11 +292,11 @@ namespace Clustering
     bool operator>=(const Point &p, const Point &q)
     {
         bool equal = false;
-        if (p.__dimensionality == q.__dimensionality)
+        if (p.m_Dimensionality == q.m_Dimensionality)
         {
-            for (int i = 0; i < p.__dimensionality; i++)
+            for (int i = 0; i < p.m_Dimensionality; i++)
             {
-                if (p.values[i] > q.values[i] || p.values[i] == q.values[i])
+                if (p.m_Values[i] > q.m_Values[i] || p.m_Values[i] == q.m_Values[i])
                 {
                     equal = true;
                     break;
@@ -317,33 +307,27 @@ namespace Clustering
         return equal;
     }
     
-    
-    
     std::ostream &operator<<(std::ostream &os, const Point &p)
     {
-        //os << "(";
-        if (p.values)
+        if (p.m_Values.size() != 0)
         {
             cout << std::fixed << std::setprecision(1);
-            for (int index = 0; index < p.__dimensionality; index++)
+            for (std::vector<double>::const_iterator it = p.m_Values.begin(); it != p.m_Values.end(); ++it)
             {
-                
-                os << p.values[index];
-                if (index == (p.__dimensionality-1))
+                os << *it;
+                if (it == --p.m_Values.end())
                 {
                     //os << endl;
-                    
                 }
                 else
                 {
                     os << ", ";
                 }
             }
-            //os << std::endl;
         }
         return os;
-        
     }
+    
     
     std::istream &operator>>(std::istream &is, Point &p)
     {
@@ -360,9 +344,9 @@ namespace Clustering
             
         }
         
-        
         return is;
-        
     }
     
+    
 }
+

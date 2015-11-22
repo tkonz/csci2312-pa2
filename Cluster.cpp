@@ -1,303 +1,197 @@
 //
 //  Cluster.cpp
-//  pa2-ucd
+//  pa4_ucd2312
 //
-//  Created by Tisha Konz on 9/17/15.
+//  Created by Tisha Konz on 10/29/15.
 //  Copyright (c) 2015 Tisha Konz. All rights reserved.
 //
 
 #include "Cluster.h"
-#include "Point.h"
-#include <stdlib.h>
-#include <fstream>
-#include <cstdlib>
 
-
-namespace Clustering
-{
+namespace Clustering {
     
-    unsigned int Cluster::__idGenerator = 1;
+    unsigned int Cluster::m_IdGenerator = 0;
     
-    Cluster::Cluster(const Cluster &c) : __centroid(c.__dimensionality)
+    Cluster::Cluster(const Cluster &c) : m_Centroid(c.m_Dimensionality)
     {
-        
         if (this == &c)
         {
             return;
         }
-        this -> size = 0;
+        this->m_Size = 0;
         
-        if (c.size == 0)
+        if (c.m_Size == 0)
         {
-            this->__dimensionality = c.__dimensionality;
-            this->points = nullptr;
+            this->m_Dimensionality = c.m_Dimensionality;
             std::cout << "Creating Empty Cluster\n";
         }
-        
-        else if (c.points->p != nullptr)
-        {
-            LNodePtr headNode = new LNode;
-            
-            headNode->p = c.points->p;
-            this->points = headNode;
-            LNodePtr previousPtr = headNode;
-            LNodePtr cursor = c.points->next;
-            
-            while (cursor != nullptr)
-            {
-                LNodePtr newNode = new LNode;
-                newNode->p = cursor->p;
-                previousPtr->next = newNode;
-                previousPtr = newNode;
-                cursor = cursor->next;
-            }
-            this->size = c.size;
-        }
+        this->m_Points.assign(c.m_Points.begin(), c.m_Points.end());
+        this->m_Size = c.m_Size;
+        this->m_Id = c.m_Id;
     }
     
     
     Cluster& Cluster::operator=(const Cluster &c)
     {
-        // check for self-assignment
         if (this == &c)
         {
             return *this;
         }
-        if (c.size == 0)
+        
+        if (c.m_Size == 0)
         {
-            size = 0;
+            m_Size = 0;
             return *this;
         }
-        if (points->p && this->size != c.size && this->size != 0)
+        
+        if (this->m_Size!= 0 && this->m_Size != c.m_Size)
         {
-            LNodePtr currentNodePtr = points; // Initialize nodePtr to head of list
-            LNodePtr nextNodePtr = nullptr;
-            while (currentNodePtr != nullptr && currentNodePtr->p != nullptr)
+            
+            m_Points.clear();
+            
+            std::forward_list<Point>::const_iterator it = c.m_Points.begin();
+            std::forward_list<Point>::iterator thisIt = m_Points.begin();
+            m_Points.push_front(*it);
+            while (it != c.m_Points.end())
             {
-                nextNodePtr = currentNodePtr->next;
-                if (!nextNodePtr->p)
-                    delete currentNodePtr;
-                currentNodePtr = nextNodePtr;
+                m_Points.insert_after(++thisIt, *++it);
+                it = ++it;
             }
-            delete currentNodePtr;
         }
-        this -> size = 0;
-        
-        LNodePtr headNode = new LNode;
-        headNode->p = c.points->p;
-        this->points = headNode;
-        LNodePtr previousPtr = headNode;
-        LNodePtr cursor = c.points->next;
-        
-        while (cursor != nullptr)
-        {
-            LNodePtr newNode = new LNode;
-            newNode->p = cursor->p;
-            previousPtr->next = newNode;
-            previousPtr = newNode;
-            cursor = cursor->next;
-        }
-        this->size = c.size;
         return *this;
-        
     }
     
-    Cluster::~Cluster()
+    void Cluster::add(const Point &value)
     {
-        LNodePtr currentNodePtr = points; // Initialize nodePtr to head of list
-        LNodePtr nextNodePtr = nullptr;
-        if (points != nullptr)
+        if (m_Size == 0)  // if there isn't a point this adds the first one
         {
-            while (currentNodePtr->p != nullptr && currentNodePtr->next != nullptr)
-            {
-                nextNodePtr = currentNodePtr->next;
-                if (!nextNodePtr->p)
-                    delete currentNodePtr;
-                currentNodePtr = nextNodePtr;
-                
-            }
-            delete currentNodePtr;
+            m_Size++;
+            m_Points.push_front(value);
+            m_Centroid_Valid = false;
+            return;
+            
         }
-    }
-    
-    void Cluster::add(const PointPtr &value)
-    {
-        
-        LNodePtr newNode = new LNode; // create a new node
-        LNodePtr previousPtr = nullptr;
-        LNodePtr nodePtr;
-        
-        newNode->p = value;   // sets pointptr p to the ptr address
-        
-        if (!points)  // if there isn't a head pointer, this creates it
+        std::forward_list<Point>::const_iterator it;
+        std::forward_list<Point>::const_iterator prev = m_Points.begin();
+        for (it = m_Points.begin(); it != m_Points.end(); it++)
         {
-            points = newNode;
-            size++;
-            newNode->next = nullptr; // sets listptr to the next node in the list to null
+            if (value == *it)
+                return;
+            if (value < *it)
+            {
+                break;
+            }
+            prev = it;
+        }
+        if (it == m_Points.begin())
+        {
+            m_Points.push_front(value);
+            m_Size++;
+            m_Centroid_Valid = false;
         }
         else
         {
-            nodePtr = points; // Initialize nodePtr to head of list
-            previousPtr = nullptr; // Initialize previousNode to null
-            
-            // Skip all nodes whose value is less than point
-            while (nodePtr != nullptr && *(nodePtr->p) < *(value))
-            {
-                previousPtr = nodePtr;
-                nodePtr = nodePtr->next;
-            }
-            
-            // If the new node is to be the 1st in the list,
-            // insert it before all other nodes.
-            if (previousPtr == nullptr)
-            {
-                points = newNode;
-                newNode->next = nodePtr;
-                size++;
-                __centroid_valid = false;
-            }
-            else    // otherwise insert after the previous node
-            {
-                previousPtr->next = newNode;
-                newNode->next = nodePtr;
-                size++;
-                __centroid_valid = false;
-            }
+            m_Points.insert_after(prev, value);
+            m_Size++;
+            m_Centroid_Valid = false;
         }
+        
     }
     
-    const PointPtr& Cluster::remove(const PointPtr &value)
+    void Cluster::remove(const Point &value) // greatest to least
     {
-        LNodePtr nodePtr;
-        LNodePtr previousPtr = nullptr;
-        
-        // If list is empty do nothing
-        if (!points)
-            return value;
-        
-        // Determine if the first node is the one.
-        if (*(points->p) == *(value))
+        if (m_Size == 0) // if list is empty
+            return;
+        if (value == *m_Points.begin()) // determine if first node is the one
         {
-            nodePtr = points->next;
-            delete points;
-            points = nodePtr;
-            size--;
-            __centroid_valid = false;
+            m_Points.pop_front();
+            m_Size--;
+            m_Centroid_Valid = false;
+            return;
         }
         else
         {
-            // Initialize nodePtr to head of list
-            nodePtr = points;
-            
-            // Skip all nodes whose value member is
-            // not equal to num
-            while (nodePtr != nullptr && (*(nodePtr->p) != *(value)))
+            std::forward_list<Point>::const_iterator it = m_Points.begin();
+            while (it != m_Points.end() && value != *it)
             {
-                //std::cout << "enetered while loop\n";
-                previousPtr = nodePtr;
-                nodePtr = nodePtr->next;
-                
+                it = ++it;
             }
-            // If nodePtr is not at the end of list, link the previous node
-            // to the node after nodePtr, then delete nodePtr
-            if (nodePtr)
+            if (it != m_Points.end())
             {
-                //std::cout << "entered if statement.\n";
-                previousPtr->next = nodePtr->next;
-                delete nodePtr;
-                size--;
-                __centroid_valid = false;
+                std::cout << *it << endl;
+                m_Points.remove(*it);
+                m_Size--;
+                m_Centroid_Valid = false;
             }
-            
         }
-        return points->p;
     }
     
     bool operator==(const Cluster &lhs, const Cluster &rhs)
     {
-        LNodePtr nodePtrL, nodePtrR = new LNode; // initializing node for traversing lhs, rhs
-        
-        if (lhs.size != rhs.size) // if not the same size, obviously not equal to each other
-        {
+        if (lhs.m_Size != rhs.m_Size)
             return false;
-        }
         else
         {
-            nodePtrL = lhs.points;    // set left side startiing point equal to
-            nodePtrR = rhs.points;    // right side starting point since of same size
-            while (nodePtrL && nodePtrR && nodePtrL->next && nodePtrR->next)
+            std::forward_list<Point>::const_iterator itL = lhs.m_Points.begin();
+            std::forward_list<Point>::const_iterator itR = rhs.m_Points.begin();
+            
+            while (itL != lhs.m_Points.end() && itR != rhs.m_Points.end())
             {
-                if (*(nodePtrL->p) != *(nodePtrR->p)) // If the values are not equal, return 0
+                if (*itL != *itR)
                     return false;
-                if (nodePtrL->next && nodePtrR->next)      // If values can continue on both side set
-                    // both side to the next node
+                else
                 {
-                    nodePtrL = nodePtrL->next;
-                    nodePtrR = nodePtrR->next;
+                    itL = ++itL;
+                    itR = ++itR;
                 }
-                
-            }   // if exiting while loop, at the same time under conditions
-            // both clusters must be equal
+            }
             return true;
         }
     }
     
-    
     Cluster& Cluster::operator+=(const Cluster &rhs)
     {
-        LNodePtr currentNode = rhs.points;
-        while (currentNode != nullptr)
+        std::forward_list<Point>::const_iterator it = rhs.m_Points.begin();
+        while (it != rhs.m_Points.end())
         {
-            this->add(currentNode->p);  // add point that p is pointing to
-            currentNode = currentNode->next;
+            this->add(*it);
+            it = ++it;
         }
-        return *this;   // dereferencing the object
-        
+        return *this;
     }
     
     Cluster & Cluster::operator-=(const Cluster &rhs)
     {
-        LNodePtr currentNode = rhs.points;
-        while (currentNode != nullptr)
+        std::forward_list<Point>::const_iterator itR = rhs.m_Points.begin();
+        std::forward_list<Point>::iterator itL =  m_Points.begin();
+        while (itR != rhs.m_Points.end())
         {
-            LNodePtr nodePtrL = this->points;
-            LNodePtr nodePtrR = rhs.points;
-            while (nodePtrR != nullptr)
+            if (*itR == *itL)
             {
-                if (nodePtrR->p == nodePtrL->p)
-                {
-                    this->remove(currentNode->p);    // remove point from Cluster
-                    currentNode = currentNode->next;
-                }
+                this->remove(*itR);
+                itR = ++itR;
+                itL = ++itL;
             }
-            
         }
         return *this;
-        
     }
     
-    Cluster & Cluster::operator+=(const Point &rhs)
+    Cluster& Cluster::operator+=(const Point &rhs)
     {
-        
-        //Point p(rhs); // make &rhs a pointPtr
-        //Cluster newCluster = *this;
-        this->add(new Point(rhs));
-        //std::cout << "this = " << *this << " endthis\n";
-        //std::cout << "this = " << *this << "end this\n";
+        this->add(rhs);
         return *this;
     }
     
     Cluster & Cluster::operator-=(const Point &rhs)
     {
         Point p = rhs;
-        this->remove(&p);
-        //std::cout << "*this = " << *this << std::endl;
+        this->remove(p);
         return *this;
     }
     
     const Cluster operator+(const Cluster &lhs, const Cluster &rhs)
     {
-        unsigned dimensions = lhs.__dimensionality;
+        unsigned dimensions = lhs.m_Dimensionality;
         Cluster total = Cluster(dimensions);
         
         total += lhs;
@@ -307,50 +201,80 @@ namespace Clustering
     
     const Cluster operator-(const Cluster &lhs, const Cluster &rhs)
     {
-        unsigned dimensions = lhs.__dimensionality;
+        unsigned dimensions = lhs.m_Dimensionality;
         Cluster total = Cluster(dimensions);
         total -= lhs;
         total -= rhs;
         return total;
     }
     
-    const Cluster operator+(const Cluster &lhs, const PointPtr &rhs)
+    const Cluster operator+(const Cluster &lhs, const Point &rhs)
     {
-        unsigned dimensions = lhs.__dimensionality;
+        unsigned dimensions = lhs.m_Dimensionality;
         Cluster total = Cluster(dimensions);
         total += lhs;
-        total += *rhs;
+        total += rhs;
         return total;
     }
     
-    const Cluster operator-(const Cluster &lhs, const PointPtr &rhs)
+    const Cluster operator-(const Cluster &lhs, const Point &rhs)
     {
-        unsigned dimensions = lhs.__dimensionality;
+        unsigned dimensions = lhs.m_Dimensionality;
         Cluster total = Cluster(dimensions);
         total -= lhs;
-        total -= *rhs;
+        total -= rhs;
         return total;
     }
+    
+    Point& Cluster::operator[](int index)
+    {
+        std::forward_list<Point>::iterator it = m_Points.begin();
+        if (m_Size == 0)
+            return m_Centroid;
+        if (index == 0)
+            return *it;
+        while (it != m_Points.end() && *it < index)
+        {
+            if (index == *it)
+                return *it;
+            it = ++it;
+        }
+        return *m_Points.end();
+    }
+    
+    //    std::forward_list<Point>::iterator Cluster::operator[](int index)
+    //    {
+    //        std::forward_list<Point>::iterator it = m_Points.begin();
+    //        if (index == 0)
+    //            return it;
+    //        while (it != m_Points.end() && *it < index)
+    //        {
+    //            if (index == *it)
+    //                return it;
+    //            it = ++it;
+    //        }
+    //        return m_Points.end();
+    //    }
+    //
     
     std::ostream &operator<<(std::ostream &os, const Cluster &c)
     {
-        if (c.points != NULL)
+        if (c.m_Size != 0)
         {
-            LNodePtr current = c.points;
-            while (current != NULL)
+            std::forward_list<Point>::const_iterator it = c.m_Points.begin();
+            while (it != c.m_Points.end())
             {
-                os << *(current->p) << " : " << c.get_id() << endl;
-                current = current->next;
+                os << *it << " : " << c.get_id() << endl;
+                it = ++it;
             }
-            
         }
         else
         {
             os << "Empty Cluster";
             os << " : " << c.get_id() << endl;
         }
-        return os;
         
+        return os;
     }
     
     std::istream &operator>>(std::istream &is, Cluster &c)
@@ -366,172 +290,143 @@ namespace Clustering
         Point *p = new Point(2);
         
         lineStream >> *p;
-        c.add(p);
+        c.add(*p);
         
         return is;
     }
     
-    void Cluster::pickPoints(int k, PointPtr pointArray[])
+    void Cluster::pickPoints(int k, std::vector<Point> &pointVec)
     {
         //IF k >= Size
         //IF
-        int index = 0;
         
-        Cluster::iterator it = points;
-        // put first point in pointArray[index]
-        pointArray[index] = *it;
+        std::forward_list<Point>::iterator it = m_Points.begin();
+        // put first point in pointVec[index]
+        pointVec.push_back(*it) ;
         
-        __centroid=*(pointArray[index]);
-        //cout << "set centroid: " << __centroid << std::endl;
+        //m_Centroid = pointArray[0];
         
+        //cout << "centroid is set to: " << m_Centroid << std::endl;
         
+        int step = (m_Size / k);
         
-        int step = (size / k);
-        
-        //std::cout << *pointArray[index] << endl;
-        index++;
-        while(points->next != nullptr && points->p != nullptr && index < k)
+        int index = 1;
+        while(it != m_Points.end() && index < k)
         {
             int counter = step;
-            while (counter != 0 && points->next != nullptr && points->p != nullptr)
+            while (counter != 0)
             {
                 it = ++it;
                 counter--;
             }
-            pointArray[index] = *it;
-            __centroid=*(pointArray[index]);
-            //cout << "set centroid: " << __centroid << std::endl;
-            //std::cout << *(pointArray[index]);
+            
+            pointVec.push_back(*it);
+            //m_Centroid = pointArray[index];
+            //cout << "set centroid: " << m_Centroid << std::endl;
             
             index++;
             
         }
-        
     }
     
     Point & Cluster::compute_centroid(Cluster &head)
     {
-        Cluster::iterator it = head.points; // Initialize iterator to head of list
-        double size = head.size;
+        std::forward_list<Point>::iterator it = head.m_Points.begin();
         
-        if (it != nullptr && it++ != nullptr)
-            // if the linked list isn't empty and if the linked list isn't just size 1 (have seperate code to deal with those)
-            __centroid = **it / size;
-        it = ++it;
-        
-        while (it != nullptr)
+        //if the linked list isn't empty and if the linked list isn't just size 1 (have seperate code to deal with those)
+        if (head.m_Size == 0)
         {
-            __centroid += **it / size;
+            m_Centroid_Valid=false;
+            return *it;
+            
+        }
+        if (head.m_Size == 1)
+        {
+            std::cout << "new centroid = " << m_Centroid << endl;
+            m_Centroid_Valid = true;
+            return m_Centroid;
+        }
+        
+        while (it != head.m_Points.end())
+        {
+            m_Centroid += *it / m_Size;
             it = ++it;
         }
-        std::cout << "new centroid = " << __centroid;
-        __centroid_valid = true;
-        return __centroid;
-        
+        std::cout << "new centroid = " << m_Centroid << endl;
+        m_Centroid_Valid = true;
+        return m_Centroid;
     }
     
     void Cluster::makeCentroid()
     {
-        __centroid.setDimensionality(__dimensionality);
-        
+        m_Centroid.setDimensionality(m_Dimensionality);
     }
     
     const Point Cluster::get_centroid()
     {
-        return __centroid;
+        return m_Centroid;
     }
     
-    
-    void Cluster::set_centroid(const Point &p)
+    void Cluster::set_centroid(Point &p)
     {
-        //CENTROID HERE IS NULL?? Do I need dynamic Point? Having problems
-        //assigning p to __centroid
-        //defined as         Point __centroid = *new Point(__dimensionality);
-        //in Cluster private member
         
-        cout << __dimensionality;
-        //__centroid.setDimensionality(__dimensionality);
-        __centroid =  p;
-        __centroid_valid = true;
-        cout << "set centroid: " << __centroid << std::endl;
+        m_Centroid =  p;
+        m_Centroid_Valid = true;
     }
     
     
+    // Hashing Table we have unique ID for each point
     double Cluster::intraClusterDistance() const
     {
-        LNodePtr previousPtr = nullptr;
-        LNodePtr currentNodePtr = points;
+        std::forward_list<Point>::const_iterator it = m_Points.begin();
+        auto itNext = ++m_Points.begin();
         
         double sum = 0;
-        if (size == 0)
+        if (m_Size == 0)
         {
             return 0;
         }
-        while(currentNodePtr && currentNodePtr->p)
+        
+        while(itNext != m_Points.end())
         {
-            previousPtr = currentNodePtr;
-            currentNodePtr = currentNodePtr->next;
-            while (currentNodePtr != nullptr && previousPtr->p != nullptr)
+            while (it != m_Points.end() && itNext != m_Points.end())
             {
-                if (!(currentNodePtr->p))
-                {
-                    sum = 0;
-                    break;
-                }
                 
-                else
-                {
-                    sum += (*(currentNodePtr->p)).distanceTo(*(previousPtr->p));
-                    currentNodePtr = currentNodePtr->next;
-                }
+                sum += (*it).distanceTo(*itNext);
+                itNext = ++itNext;
             }
         }
-        return ((sum / 2) / this->getClusterEdges());
+        if (this->getClusterEdges() == 0)
+            return sum / 2;
+        double d = ((sum / 2) / this->getClusterEdges());
+        
+        return d;
     }
     
     double interClusterDistance(const Cluster &c1, const Cluster &c2)
     {
-        LNodePtr nodePtrL, nodePtrR, previousPtrL, previousPtrR;
-        if (c1.size == 0 || c2.size == 0)
+        std::forward_list<Point>::const_iterator itc1 = c1.m_Points.begin();
+        std::forward_list<Point>::const_iterator itc2 = c2.m_Points.begin();
+        
+        if (c1.m_Size == 0 || c2.m_Size == 0)
         {
             return 0;
         }
         
-        nodePtrL = c1.points;
-        nodePtrR = c2.points;
+        double sum = 0;
         
-        double sum;
-        
-        
-        previousPtrL = nodePtrL;
-        previousPtrR = nodePtrR;
-        
-        while (nodePtrL != nullptr && nodePtrR != nullptr)
+        while (itc1 != c1.m_Points.end() && itc2 != c2.m_Points.end())
         {
-            if (!(nodePtrL->p && nodePtrR->p))
-            {
-                sum = 0;
-                break;
-            }
-            previousPtrL = nodePtrL;
-            previousPtrR = nodePtrR;
-            
-            nodePtrL = nodePtrL->next;
-            nodePtrR = nodePtrR->next;
-            while (nodePtrL != nullptr && nodePtrR != nullptr)
-            {
-                if (nodePtrL->p != nullptr && nodePtrR->p != nullptr)
-                {
-                    sum += (*(nodePtrL->p)).distanceTo(*(nodePtrR->p));
-                    nodePtrL = nodePtrL->next;
-                    nodePtrR = nodePtrR->next;
-                }
-                
-            }
+            sum += (*itc1).distanceTo(*itc2);
+            itc1 = ++itc1;
+            itc2 = ++itc2;
         }
-        return (sum / getInterClusterEdges(c1, c2));
+        if (getInterClusterEdges(c1, c2) == 0)
+            return sum / 1;
+        double d = (sum / getInterClusterEdges(c1, c2));
+        
+        return d;
     }
     
     
 }
-
