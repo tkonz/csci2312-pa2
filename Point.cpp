@@ -6,7 +6,6 @@
 //  Copyright (c) 2015 Tisha Konz. All rights reserved.
 //
 
-
 #include "point.h"
 #include <cmath>
 #include <fstream>
@@ -15,36 +14,41 @@
 
 namespace Clustering
 {
-    unsigned int Point::m_IdGenerator = 0;
+    template <typename T>
+    unsigned int Point<T>::m_IdGenerator = 0;
     
-    Point::Point(const Point &p)
+    template <typename T>
+    Point<T>::Point(const Point<T> &p)
     {
         this->m_Dimensionality = p.m_Dimensionality;
-        for (std::vector<double>::const_iterator it = p.m_Values.begin(); it != p.m_Values.end(); ++it)
+        for (auto it = p.m_Values.begin(); it != p.m_Values.end(); ++it)
         {
             m_Values.push_back(*it);
         }
         this->m_Id = p.m_Id;
     }
     
-    void Point::setDimensionality(unsigned n)
+    template <typename T>
+    void Point<T>::setDimensionality(unsigned n)
     {
         m_Dimensionality = n;
     }
     
-    void Point::setValue(int dimension, double p)
+    template <typename T>
+    void Point<T>::setValue(int dimension, T p)
     {
         this->m_Dimensionality = dimension;
         m_Values.push_back(p);
     }
     
-    double Point::getValue(int dimension) const
+    template <typename T>
+    T Point<T>::getValue(int dimension) const
     {
         return m_Values[dimension-1];
     }
     
-    
-    Point& Point::operator=(const Point &p)
+    template <typename T>
+    Point<T>& Point<T>::operator=(const Point<T> &p)
     {
         if (this == &p)
             return *this;
@@ -56,37 +60,40 @@ namespace Clustering
         
         this->m_Id = p.m_Id;
         
-        for (std::vector<double>::const_iterator it = p.m_Values.begin(); it != p.m_Values.end(); ++it)
+        for (auto it = p.m_Values.begin(); it != p.m_Values.end(); ++it)
         {
             m_Values.push_back(*it);
         }
-        
         return *this;
+        
     }
     
-    Point& Point::operator*=(double scalar)
+    template <typename T>
+    Point<T>& Point<T>::operator*=(T scalar)
     {
-        for (std::vector<double>::iterator it = m_Values.begin(); it != m_Values.end(); ++it)
+        for (auto it = m_Values.begin(); it != m_Values.end(); ++it)
         {
             m_Values[*it] *= scalar;
         }
         return *this;
     }
     
-    Point& Point::operator/=(double scalar)
+    template <typename T>
+    Point<T>& Point<T>::operator/=(T scalar)
     {
-        for (std::vector<double>::iterator it = m_Values.begin(); it != m_Values.end(); ++it)
+        for (auto it = m_Values.begin(); it != m_Values.end(); ++it)
         {
             m_Values[*it] /= scalar;
         }
         return *this;
     }
     
-    const Point Point::operator*(double scalar) const
+    template <typename T>
+    const Point<T> Point<T>::operator*(T scalar) const
     {
         double product = 0;
         Point temp(m_Dimensionality);
-        for (std::vector<double>::const_iterator it = m_Values.begin(); it != m_Values.end(); ++it)
+        for (auto it = m_Values.begin(); it != m_Values.end(); ++it)
         {
             product = *it * scalar;
             temp.setValue(*it, product);
@@ -94,12 +101,12 @@ namespace Clustering
         return temp;
     }
     
-    
-    const Point Point::operator/(double scalar) const
+    template <typename T>
+    const Point<T> Point<T>::operator/(T scalar) const
     {
         double quotient = 0;
         Point temp(m_Dimensionality);
-        for (std::vector<double>::const_iterator it = m_Values.begin(); it != m_Values.end(); ++it)
+        for (auto it = m_Values.begin(); it != m_Values.end(); ++it)
         {
             quotient = *it / scalar;
             temp.setValue(*it, quotient);
@@ -107,7 +114,8 @@ namespace Clustering
         return temp;
     }
     
-    double Point::distanceTo(const Point &p) const
+    template <typename T>
+    double Point<T>::distanceTo(const Point<T> &p) const
     {
         double sum = 0;
         if (p.m_Dimensionality == m_Dimensionality)
@@ -121,7 +129,8 @@ namespace Clustering
         
     }
     
-    Point &operator+=(Point & p, const Point &q)
+    template <typename T>
+    Point<T> &operator+=(Point<T> & p, const Point<T> &q)
     {
         // check dimensions ==
         for (int i = 0; i < p.m_Dimensionality; i++)
@@ -131,7 +140,8 @@ namespace Clustering
         return p;
     }
     
-    Point &operator-=(Point &p, const Point &q)
+    template <typename T>
+    Point<T> &operator-=(Point<T> &p, const Point<T> &q)
     {
         // check dimensions ==
         for (int i = 0; i < p.m_Dimensionality; i++)
@@ -141,10 +151,10 @@ namespace Clustering
         return p;
     }
     
-    const Point operator+(const Point &p, const Point &q)
+    template <typename T>
+    const Point<T> operator+(const Point<T> &p, const Point<T> &q)
     {
-        
-        Point temp(p.m_Dimensionality);
+        Point<T> temp(p.m_Dimensionality);
         
         for (int i = 0; i < p.m_Dimensionality; i++)
         {
@@ -155,11 +165,12 @@ namespace Clustering
         return temp;
     }
     
-    const Point operator-(const Point &p, const Point &q)
+    template <typename T>
+    const Point<T> operator-(const Point<T> &p, const Point<T> &q)
     {
         // check dimensions ==
         
-        Point temp(p.m_Dimensionality);
+        Point<T> temp(p.m_Dimensionality);
         for (int i = 0; i < p.m_Dimensionality; i++)
         {
             double difference;
@@ -169,9 +180,8 @@ namespace Clustering
         return temp;
     }
     
-    
-    
-    bool operator==(const Point &p, const Point &q)
+    template <typename T>
+    bool operator==(const Point<T> &p, const Point<T> &q)
     {
         bool equal = false;
         //std::cout << "bool = " << equal << std::endl;
@@ -195,7 +205,8 @@ namespace Clustering
         return equal;
     }
     
-    bool operator!=(const Point &p, const Point &q)
+    template <typename T>
+    bool operator!=(const Point<T> &p, const Point<T> &q)
     {
         bool notEqual = true;
         if (p.getDimensions() == q.getDimensions())
@@ -221,8 +232,8 @@ namespace Clustering
         return notEqual;
     }
     
-    
-    bool operator<(const Point &p, const Point &q)
+    template <typename T>
+    bool operator<(const Point<T> &p, const Point<T> &q)
     {
         bool lessThan = false;
         if (p.m_Dimensionality != q.m_Dimensionality)
@@ -247,7 +258,8 @@ namespace Clustering
         return lessThan;
     }
     
-    bool operator>(const Point &p, const Point &q)
+    template <typename T>
+    bool operator>(const Point<T> &p, const Point<T> &q)
     {
         bool greaterThan = false;
         if (p.m_Dimensionality == q.m_Dimensionality)
@@ -271,7 +283,8 @@ namespace Clustering
         return greaterThan;
     }
     
-    bool operator<=(const Point &p, const Point &q)
+    template <typename T>
+    bool operator<=(const Point<T> &p, const Point<T> &q)
     {
         bool equal = false;
         if (p.m_Dimensionality == q.m_Dimensionality)
@@ -289,7 +302,8 @@ namespace Clustering
         return equal;
     }
     
-    bool operator>=(const Point &p, const Point &q)
+    template <typename T>
+    bool operator>=(const Point<T> &p, const Point<T> &q)
     {
         bool equal = false;
         if (p.m_Dimensionality == q.m_Dimensionality)
@@ -307,7 +321,8 @@ namespace Clustering
         return equal;
     }
     
-    std::ostream &operator<<(std::ostream &os, const Point &p)
+    template <typename T>
+    std::ostream &operator<<(std::ostream &os, const Point<T> &p)
     {
         if (p.m_Values.size() != 0)
         {
@@ -328,8 +343,8 @@ namespace Clustering
         return os;
     }
     
-    
-    std::istream &operator>>(std::istream &is, Point &p)
+    template <typename T>
+    std::istream &operator>>(std::istream &is, Point<T> &p)
     {
         
         string value;

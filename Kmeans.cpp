@@ -12,10 +12,11 @@ double MAX = DBL_MAX;
 
 namespace Clustering
 {
-    double Kmeans::SCORE_DIFF_THRESHOLD = .75;
+    template <typename T>
+    double Kmeans<T>::SCORE_DIFF_THRESHOLD = .75;
     
-    //FIX logic here
-    double Kmeans::computeClusteringScore()
+    template <typename T>
+    double Kmeans<T>::computeClusteringScore()
     {
         double score;
         double inner;
@@ -39,7 +40,8 @@ namespace Clustering
     
     
     // initializing ClusterVec with k clusters
-    void Kmeans::initializeClusters()
+    template <typename T>
+    void Kmeans<T>::initializeClusters()
     {
         //clusterVec = &point_space;
         clusterVec.push_back(point_space);
@@ -49,11 +51,11 @@ namespace Clustering
             std::cout << clusterVec[i] << endl;
     }
     
-    
-    void Kmeans::initializeCentroids()
+    template <typename T>
+    void Kmeans<T>::initializeCentroids()
     {
         initializeClusters();
-        std::vector<Point> pointVec;
+        std::vector<Point<T>> pointVec;
         point_space.pickPoints(m_k, pointVec);
         for (int i = 0; i < m_k; i++)
         {
@@ -64,13 +66,13 @@ namespace Clustering
         for (int i = 1; i < m_k; i++)
         {
             clusterVec[i].set_centroid(pointVec[i]);
-            //std::cout << clusterVec[i].get_centroid();
         }
     }
     
-    Cluster* Kmeans::findNearestCentroid(Point &p)
+    template <typename T>
+    Cluster<T>* Kmeans<T>::findNearestCentroid(Point<T> &p)
     {
-        Cluster *c = &clusterVec[0];
+        Cluster<T> *c = &clusterVec[0];
         double distance = 0;
         distance = p.distanceTo(clusterVec[0].get_centroid());
         for (int i = 1; i < m_k; i++)
@@ -84,7 +86,8 @@ namespace Clustering
         return c;
     }
     
-    void Kmeans::kMeansAlgorithm()
+    template <typename T>
+    void Kmeans<T>::kMeansAlgorithm()
     {
         initializeCentroids();
         oldScore = 0;
@@ -94,20 +97,19 @@ namespace Clustering
         //while loop until scoreDiff < SCORE_DIFF_THRESHOLD
         while (scoreDiff > SCORE_DIFF_THRESHOLD)
         {
-            std::vector<Cluster>::iterator it = clusterVec.begin(); // cluster[i]
+            auto it = clusterVec.begin(); // cluster[i]
             // Loop through all clusters with outer for loop
             for (int counter = 0; counter < m_k; counter++)
             {
-                std::forward_list<Point>::iterator list = (*it).m_Points.begin();
+                auto list = (*it).m_Points.begin();
                 
                 while (list != (*it).m_Points.end()) // Loop through all points in this cluster with while
                 {
-                    Cluster *cluster = findNearestCentroid(*list);
+                    Cluster<T> *cluster = findNearestCentroid(*list);
                     if (cluster != &clusterVec[i])
                     {
                         // create a move object of point, with two clusters and perform move
-                        
-                        Cluster::Move m(&*list, &clusterVec[i], cluster);
+                        typename Cluster<T>::Move m(&*list, &clusterVec[i], cluster);
                         m.perform();
                     }
                     //it = ++it;
@@ -132,7 +134,8 @@ namespace Clustering
         printClusters();
     }
     
-    void Kmeans::printClusters()
+    template <typename T>
+    void Kmeans<T>::printClusters()
     {
         for (int i = 0; i < m_k; i++)
         {
